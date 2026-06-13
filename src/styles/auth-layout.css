@@ -1,0 +1,115 @@
+.auth-layout {
+  position: relative;
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 40px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(24, 26, 36, 0.32), rgba(24, 26, 36, 0.92)),
+    linear-gradient(90deg, rgba(4, 6, 12, 0.86), rgba(4, 6, 12, 0.28) 48%, rgba(4, 6, 12, 0.84)),
+    url("https://image.tmdb.org/t/p/w1280/nvxrQQspxmSblCYDtvDAbVFX8Jt.jpg") center / cover;
+}
+
+.auth-layout::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.7), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.7)),
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.1), transparent 36%);
+}
+
+.auth-layout__panel {
+  position: relative;
+  z-index: 1;
+  width: min(529px, calc(100vw - 40px));
+  padding: 40px;
+  color: var(--color-text-primary);
+  background: rgba(24, 26, 36, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-auth);
+  backdrop-filter: blur(14px);
+}
+
+.auth-layout__brand {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 28px;
+}
+
+.auth-layout__brand img {
+  width: 163px;
+  height: auto;
+}
+
+.auth-layout__heading {
+  margin-bottom: 34px;
+  text-align: center;
+}
+
+.auth-layout__heading h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.auth-layout__heading p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+}
+
+.auth-layout__footer {
+  display: none;
+  margin: 18px 0 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.auth-layout__footer a {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .auth-layout {
+    min-height: 709px;
+    padding: 24px 20px;
+    align-items: center;
+  }
+
+  .auth-layout__panel {
+    width: 100%;
+    padding: 24px;
+    border-radius: var(--radius-xl);
+  }
+
+  .auth-layout__brand {
+    margin-bottom: 20px;
+  }
+
+  .auth-layout__brand img {
+    width: 132px;
+  }
+
+  .auth-layout__heading {
+    margin-bottom: 24px;
+  }
+
+  .auth-layout__heading h1 {
+    font-size: 28px;
+  }
+
+  .auth-layout__footer {
+    display: block;
+  }
+}
