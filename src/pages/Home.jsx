@@ -1,7 +1,7 @@
-import Footer from '../components/Footer.jsx'
-import HeroSection from '../components/HeroSection.jsx'
-import MovieSection from '../components/MovieSection.jsx'
-import Navbar from '../components/Navbar.jsx'
+import Footer from '../components/layout/Footer.jsx'
+import Navbar from '../components/layout/Navbar.jsx'
+import HeroSection from '../components/sections/HeroSection.jsx'
+import MovieSection from '../components/sections/MovieSection.jsx'
 import {
   continueWatching,
   heroMovie,
@@ -9,7 +9,6 @@ import {
   topRatedMovies,
   trendingMovies,
 } from '../data/movies.js'
-import '../styles/home.css'
 
 // function MobileBrowserHeader() {
 //   return (
@@ -34,10 +33,10 @@ import '../styles/home.css'
 
 function Home() {
   return (
-    <div className="home-page">
+    <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
       {/* <MobileBrowserHeader /> */}
       <Navbar />
-      <main>
+      <main className="bg-[#181a1c] pb-20 max-[640px]:pb-0">
         <HeroSection movie={heroMovie} />
         <MovieSection title="Melanjutkan Tonton Film" movies={continueWatching} variant="landscape" />
         <MovieSection title="Top Rating Film dan Series Hari ini" movies={topRatedMovies} />

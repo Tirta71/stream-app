@@ -105,6 +105,13 @@ export const topRatedMovies = [
     title: 'All of Us Are Dead',
     badge: 'Episode Baru',
     image: tmdbImage('pTEFqAjLd5YTsMD6NSUxV6Dq7A6.jpg'),
+    hoverPreview: {
+      previewImage:
+        'https://images.saymedia-content.com/.image/t_share/MTg3Nzc5OTg0OTAzMDU0Njgx/tv-review-all-of-us-are-dead.jpg',
+      ageRating: '13+',
+      episodeCount: '16 Episode',
+      genres: ['Misteri', 'Kriminal', 'Fantasi'],
+    },
   },
   {
     id: 'big-hero',
