@@ -10,6 +10,7 @@ function MovieSection({ title, movies, variant = 'poster' }) {
   const hasHoverPreview = !isLandscape && movies.some((movie) => movie.hoverPreview)
   const sectionId = `movie-section-${title.toLowerCase().replaceAll(' ', '-')}`
   const railId = `${sectionId}-rail`
+  const visibleCardCount = isLandscape ? 4 : 5
 
   useEffect(() => {
     const updateBounds = () => {
@@ -45,29 +46,28 @@ function MovieSection({ title, movies, variant = 'poster' }) {
     const railStyle = window.getComputedStyle(rail)
     const gap = Number.parseFloat(railStyle.columnGap || railStyle.gap) || 0
     const cardWidth = firstCard?.getBoundingClientRect().width || rail.clientWidth
-    const visibleCards = isLandscape ? 2 : 3
-    const scrollAmount = (cardWidth + gap) * visibleCards
+    const scrollAmount = (cardWidth + gap) * visibleCardCount
 
     setOffset((currentOffset) => Math.max(0, Math.min(currentOffset + direction * scrollAmount, maxOffset)))
   }
 
   const sectionClassName = [
-    `relative bg-[#181a1c] px-20 py-10 min-[641px]:max-[900px]:px-3 min-[641px]:max-[900px]:py-5 ${
+    `relative bg-[#181a1c] px-20 min-[641px]:max-[900px]:px-3 ${
       hasHoverPreview ? 'overflow-visible' : 'overflow-hidden'
-    }`,
+    } ${hasHoverPreview ? 'min-[901px]:hover:z-20 min-[901px]:focus-within:z-20' : ''}`,
     isLandscape
-      ? 'min-h-[309px] min-[641px]:max-[900px]:min-h-[142px] max-[640px]:min-h-[235px] max-[640px]:p-[20px_0_0_20px]'
-      : 'min-h-[512px] min-[641px]:max-[900px]:min-h-[241px] max-[640px]:mt-5 max-[640px]:min-h-[189px] max-[640px]:p-[0_0_0_20px]',
+      ? 'min-h-[309px] pb-10 pt-9 min-[641px]:max-[900px]:min-h-[142px] min-[641px]:max-[900px]:py-5 max-[640px]:mt-0 max-[640px]:min-h-[235px] max-[640px]:p-[28px_0_0_20px]'
+      : 'min-h-[512px] py-10 min-[641px]:max-[900px]:min-h-[241px] min-[641px]:max-[900px]:py-5 max-[640px]:mt-5 max-[640px]:min-h-[189px] max-[640px]:p-[0_0_0_20px]',
   ].join(' ')
 
   const railClassName = [
     'flex w-max items-stretch transition-transform duration-[680ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-none min-[641px]:max-[900px]:w-auto max-[640px]:!transform-none max-[640px]:!transition-none max-[640px]:[scrollbar-width:none]',
     isLandscape
       ? 'gap-6 min-[641px]:max-[900px]:gap-3 max-[640px]:w-[634px] max-[640px]:gap-4'
-      : 'gap-7 min-[641px]:max-[900px]:gap-3.5 max-[640px]:w-[428px] max-[640px]:gap-[15.4px]',
+      : 'gap-[30px] min-[641px]:max-[900px]:gap-3.5 max-[640px]:w-[428px] max-[640px]:gap-[15.4px]',
   ].join(' ')
   const viewportClassName = [
-    hasHoverPreview ? 'overflow-visible' : 'overflow-hidden',
+    hasHoverPreview ? '[overflow-x:clip] [overflow-y:visible]' : 'overflow-hidden',
     'max-[640px]:overflow-x-auto max-[640px]:[overscroll-behavior-inline:contain] max-[640px]:[scrollbar-width:none] max-[640px]:[-webkit-overflow-scrolling:touch] max-[640px]:[&::-webkit-scrollbar]:hidden',
   ].join(' ')
 
@@ -104,9 +104,14 @@ function MovieSection({ title, movies, variant = 'poster' }) {
           className={railClassName}
           style={{ transform: `translate3d(${-offset}px, 0, 0)` }}
         >
-          {movies.map((movie) => (
-            <MovieCard key={movie.id} {...movie} variant={variant} />
-          ))}
+          {movies.map((movie, index) => {
+            const slotIndex = index % visibleCardCount
+            const hoverPlacement = slotIndex === 0 ? 'start' : slotIndex === visibleCardCount - 1 ? 'end' : 'center'
+
+            return (
+              <MovieCard key={movie.id} {...movie} variant={variant} hoverPlacement={hoverPlacement} />
+            )
+          })}
         </div>
       </div>
 

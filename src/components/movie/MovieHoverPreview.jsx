@@ -1,8 +1,8 @@
 function CircleButton({ children, label, variant = 'outline' }) {
   const className =
     variant === 'solid'
-      ? 'grid size-[55px] place-items-center rounded-full bg-white text-[#181a1c]'
-      : 'grid size-[54px] place-items-center rounded-full border border-[#c1c2c4] text-white'
+      ? 'grid size-[55px] place-items-center rounded-full bg-white text-[#181a1c] transition-transform duration-150 hover:scale-105'
+      : 'grid size-[54px] place-items-center rounded-full border border-[#c1c2c4] text-white transition-[border-color,transform] duration-150 hover:scale-105 hover:border-white'
 
   return (
     <button type="button" className={className} aria-label={label}>
@@ -11,10 +11,28 @@ function CircleButton({ children, label, variant = 'outline' }) {
   )
 }
 
-function MovieHoverPreview({ title, image, previewImage = image, ageRating = '13+', episodeCount = '16 Episode', genres = [] }) {
+function MovieHoverPreview({
+  title,
+  image,
+  previewImage = image,
+  ageRating = '13+',
+  episodeCount = '16 Episode',
+  genres = [],
+  placement = 'center',
+}) {
+  const placementClassName = {
+    start: 'left-0 -translate-y-1/2',
+    center: 'left-1/2 -translate-x-1/2 -translate-y-1/2',
+    end: 'right-0 -translate-y-1/2',
+  }
+
   return (
-    <div className="pointer-events-none absolute left-1/2 top-1/2 z-30 hidden w-[408px] -translate-x-1/2 -translate-y-1/2 scale-[0.96] overflow-hidden rounded-lg bg-[#181a1c] opacity-0 shadow-[0_18px_60px_rgba(0,0,0,0.5)] transition-[opacity,transform] duration-200 min-[901px]:block min-[901px]:group-hover/movie-card:pointer-events-auto min-[901px]:group-hover/movie-card:scale-100 min-[901px]:group-hover/movie-card:opacity-100 min-[901px]:group-focus-within/movie-card:pointer-events-auto min-[901px]:group-focus-within/movie-card:scale-100 min-[901px]:group-focus-within/movie-card:opacity-100">
-      <img className="h-[254px] w-full object-cover" src={previewImage} alt={title} />
+    <div
+      className={`pointer-events-none absolute top-1/2 z-50 hidden w-[408px] scale-[0.94] overflow-hidden rounded-lg bg-[#181a1c] opacity-0 shadow-[0_26px_74px_rgba(0,0,0,0.58)] ring-1 ring-white/[0.06] transition-[opacity,transform] duration-200 ease-out min-[901px]:block min-[901px]:group-hover/movie-card:pointer-events-auto min-[901px]:group-hover/movie-card:scale-100 min-[901px]:group-hover/movie-card:opacity-100 min-[901px]:group-focus-within/movie-card:pointer-events-auto min-[901px]:group-focus-within/movie-card:scale-100 min-[901px]:group-focus-within/movie-card:opacity-100 ${
+        placementClassName[placement] ?? placementClassName.center
+      }`}
+    >
+      <img className="h-[254px] w-full object-cover brightness-[0.82]" src={previewImage} alt={title} />
       <div className="h-[206px] bg-[#181a1c] px-[29px] pt-[29px] text-white">
         <div className="flex h-[55px] items-start justify-between">
           <div className="flex items-center gap-4">
