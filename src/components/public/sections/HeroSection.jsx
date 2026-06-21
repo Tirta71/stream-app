@@ -1,3 +1,29 @@
+function SoundButton({ className = "", iconClassName = "" }) {
+  return (
+    <button
+      type="button"
+      className={[
+        "grid place-items-center rounded-full border border-white/40 bg-transparent text-white transition-[border-color,background] duration-150 hover:border-white/70 hover:bg-white/10",
+        className,
+      ].join(" ")}
+      aria-label="Matikan suara"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className={[
+          "fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2]",
+          iconClassName,
+        ].join(" ")}
+      >
+        <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+        <path d="m19 9-6 6" />
+        <path d="m13 9 6 6" />
+      </svg>
+    </button>
+  );
+}
+
 function HeroSection({ movie }) {
   return (
     <section
@@ -52,23 +78,12 @@ function HeroSection({ movie }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="absolute bottom-[88px] right-20 grid h-11 w-11 place-items-center rounded-full border border-white/40 bg-transparent text-white transition-[border-color,background] duration-150 hover:border-white/70 hover:bg-white/10 max-[760px]:bottom-[42px] max-[760px]:right-6 max-[760px]:h-[25px] max-[760px]:w-[25px] max-[760px]:border-white/40"
-        aria-label="Matikan suara"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="h-6 w-6 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2] max-[760px]:h-4 max-[760px]:w-4"
-        >
-          <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-          <path d="m19 9-6 6" />
-          <path d="m13 9 6 6" />
-        </svg>
-      </button>
+      <SoundButton
+        className="absolute bottom-[88px] right-20 h-11 w-11 max-[760px]:bottom-[48px] max-[760px]:right-6 max-[760px]:h-[25px] max-[760px]:w-[25px]"
+        iconClassName="h-6 w-6 max-[760px]:h-4 max-[760px]:w-4"
+      />
     </section>
-  )
+  );
 }
 
-export default HeroSection
+export default HeroSection;

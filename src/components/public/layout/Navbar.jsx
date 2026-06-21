@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import logo from "../../assets/img/logo/Logo.png";
-import logoMobile from "../../assets/img/logo/logo_mobile.png";
+import logo from "../../../assets/img/logo/Logo.png";
+import logoMobile from "../../../assets/img/logo/logo_mobile.png";
 
 const profileAvatarUrl =
   "https://api.dicebear.com/9.x/adventurer/svg?seed=ChillProfile";

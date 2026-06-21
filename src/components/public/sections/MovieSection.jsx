@@ -7,7 +7,7 @@ function MovieSection({ title, movies, variant = 'poster' }) {
   const [offset, setOffset] = useState(0)
   const [maxOffset, setMaxOffset] = useState(0)
   const isLandscape = variant === 'landscape'
-  const hasHoverPreview = !isLandscape && movies.some((movie) => movie.hoverPreview)
+  const hasHoverPreview = movies.some((movie) => movie.hoverPreview)
   const sectionId = `movie-section-${title.toLowerCase().replaceAll(' ', '-')}`
   const railId = `${sectionId}-rail`
   const visibleCardCount = isLandscape ? 4 : 5

@@ -1,6 +1,6 @@
-import AuthForm from '../components/auth/AuthForm.jsx'
-import AuthLayout from '../components/auth/AuthLayout.jsx'
-import { registerAuth } from '../data/auth.js'
+import AuthForm from '../../components/public/auth/AuthForm.jsx'
+import AuthLayout from '../../components/public/auth/AuthLayout.jsx'
+import { registerAuth } from '../../data/auth.js'
 
 function Register() {
   return (

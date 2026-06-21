@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import logo from '../../assets/img/logo/Logo.png'
+import logo from '../../../assets/img/logo/Logo.png'
 
 const authBackgroundUrl = 'https://image.tmdb.org/t/p/w1280/nvxrQQspxmSblCYDtvDAbVFX8Jt.jpg'
 

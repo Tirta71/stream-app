@@ -2,7 +2,7 @@ import MovieHoverPreview from './MovieHoverPreview.jsx'
 
 function MovieCard({ title, image, rating, badge, top, variant, hoverPreview, hoverPlacement = 'center' }) {
   const isLandscape = variant === 'landscape'
-  const hasHoverPreview = !isLandscape && Boolean(hoverPreview)
+  const hasHoverPreview = Boolean(hoverPreview)
   const sizeClassName = isLandscape
     ? 'h-[162px] w-[302px] min-[641px]:max-[900px]:h-[82px] min-[641px]:max-[900px]:w-[155px] max-[640px]:h-[151px] max-[640px]:w-[309px]'
     : 'h-[365px] w-[232px] min-[641px]:max-[900px]:h-[187px] min-[641px]:max-[900px]:w-[120px] max-[640px]:h-[143.4px] max-[640px]:w-[95.6px]'
@@ -65,7 +65,7 @@ function MovieCard({ title, image, rating, badge, top, variant, hoverPreview, ho
       </div>
 
       {hasHoverPreview ? (
-        <MovieHoverPreview title={title} image={image} placement={hoverPlacement} {...hoverPreview} />
+        <MovieHoverPreview title={title} image={image} placement={hoverPlacement} variant={variant} {...hoverPreview} />
       ) : null}
     </article>
   )

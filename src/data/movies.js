@@ -1,11 +1,34 @@
 const tmdbImage = (path, size = 'w500') => `https://image.tmdb.org/t/p/${size}/${path}`
 
-const hoverPreview = ({ previewImage, ageRating = '13+', episodeCount = '16 Episode', genres }) => ({
+const hoverPreview = ({
+  previewImage,
+  ageRating = '13+',
+  episodeCount = '16 Episode',
+  duration,
+  episodeTitle,
+  genres,
+  progress,
+  type,
+}) => ({
   previewImage,
   ageRating,
   episodeCount,
+  duration,
+  episodeTitle,
   genres,
+  progress,
+  type,
 })
+
+const continueHoverPreview = ({ previewImage, duration = '2j 33m', episodeTitle = '"Episode 1"', genres, progress = 35 }) =>
+  hoverPreview({
+    previewImage,
+    duration,
+    episodeTitle,
+    genres,
+    progress,
+    type: 'continue',
+  })
 
 export const heroMovie = {
   title: 'Duty After School',
@@ -20,12 +43,50 @@ export const continueWatching = [
     title: "Don't Look Up",
     rating: '4.5',
     image: tmdbImage('nvxrQQspxmSblCYDtvDAbVFX8Jt.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('nvxrQQspxmSblCYDtvDAbVFX8Jt.jpg', 'w780'),
+      duration: '2j 18m',
+      genres: ['Drama', 'Komedi', 'Fiksi Ilmiah'],
+      progress: 58,
+    }),
+  },
+  {
+    id: 'all-of-us-continue',
+    title: 'All of Us Are Dead',
+    rating: '4.5',
+    image:
+      'https://images.saymedia-content.com/.image/t_share/MTg3Nzc5OTg0OTAzMDU0Njgx/tv-review-all-of-us-are-dead.jpg',
+    hoverPreview: continueHoverPreview({
+      previewImage:
+        'https://images.saymedia-content.com/.image/t_share/MTg3Nzc5OTg0OTAzMDU0Njgx/tv-review-all-of-us-are-dead.jpg',
+      duration: '2j 33m',
+      genres: ['Misteri', 'Kriminal', 'Fantasi'],
+      progress: 35,
+    }),
   },
   {
     id: 'the-batman',
     title: 'The Batman',
     rating: '4.2',
     image: tmdbImage('rvtdN5XkWAfGX6xDuPL6yYS2seK.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('rvtdN5XkWAfGX6xDuPL6yYS2seK.jpg', 'w780'),
+      duration: '2j 56m',
+      genres: ['Aksi', 'Kriminal', 'Drama'],
+      progress: 42,
+    }),
+  },
+  {
+    id: 'otto',
+    title: 'A Man Called Otto',
+    rating: '4.4',
+    image: tmdbImage('9ZznETDyfPWVugRiv0jfGrkRftw.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('9ZznETDyfPWVugRiv0jfGrkRftw.jpg', 'w780'),
+      duration: '2j 33m',
+      genres: ['Drama', 'Komedi', 'Romantis'],
+      progress: 61,
+    }),
   },
   {
     id: 'blue-lock',
@@ -33,60 +94,108 @@ export const continueWatching = [
     rating: '4.6',
     badge: 'Episode Baru',
     image: tmdbImage('seMRyWVwIVBWbC9xaMzDMZJ8fUH.jpg', 'w780'),
-  },
-  {
-    id: 'otto',
-    title: 'A Man Called Otto',
-    rating: '4.4',
-    image: tmdbImage('9ZznETDyfPWVugRiv0jfGrkRftw.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('seMRyWVwIVBWbC9xaMzDMZJ8fUH.jpg', 'w780'),
+      duration: '24m',
+      genres: ['Anime', 'Olahraga', 'Drama'],
+      progress: 35,
+    }),
   },
   {
     id: 'avatar-way-of-water-landscape',
     title: 'Avatar',
     rating: '4.7',
     image: tmdbImage('s16H6tpK2utvwDtzZ8Qy4qm5Emw.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('s16H6tpK2utvwDtzZ8Qy4qm5Emw.jpg', 'w780'),
+      duration: '3j 12m',
+      genres: ['Fantasi', 'Petualangan', 'Aksi'],
+      progress: 30,
+    }),
   },
   {
     id: 'guardians-landscape',
     title: 'Guardians',
     rating: '4.8',
     image: tmdbImage('5YZbUmjbMa3ClvSW1Wj3D6XGolb.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('5YZbUmjbMa3ClvSW1Wj3D6XGolb.jpg', 'w780'),
+      duration: '2j 30m',
+      genres: ['Komedi', 'Aksi', 'Fantasi'],
+      progress: 47,
+    }),
   },
   {
     id: 'little-mermaid-landscape',
     title: 'The Little Mermaid',
     rating: '4.0',
     image: tmdbImage('A7JQ7MIV5fkIxceI5hizRIe6DRJ.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('A7JQ7MIV5fkIxceI5hizRIe6DRJ.jpg', 'w780'),
+      duration: '2j 15m',
+      genres: ['Anak-anak', 'Romantis', 'Fantasi'],
+      progress: 52,
+    }),
   },
   {
     id: 'tomorrow-war-landscape',
     title: 'The Tomorrow War',
     rating: '4.3',
     image: tmdbImage('yizL4cEKsVvl17Wc1mGEIrQtM2F.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('yizL4cEKsVvl17Wc1mGEIrQtM2F.jpg', 'w780'),
+      duration: '2j 20m',
+      genres: ['Aksi', 'Fiksi Ilmiah', 'Perang'],
+      progress: 39,
+    }),
   },
   {
     id: 'quantumania-landscape',
     title: 'Quantumania',
     rating: '4.1',
     image: tmdbImage('m8JTwHFwX7I7JY5fPe4SjqejWag.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('m8JTwHFwX7I7JY5fPe4SjqejWag.jpg', 'w780'),
+      duration: '2j 5m',
+      genres: ['Aksi', 'Petualangan', 'Fantasi'],
+      progress: 64,
+    }),
   },
   {
     id: 'sonic-landscape',
     title: 'Sonic 2',
     rating: '4.5',
     image: tmdbImage('egoyMDLqCxzjnSrWOz50uLlJWmD.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('egoyMDLqCxzjnSrWOz50uLlJWmD.jpg', 'w780'),
+      duration: '2j 2m',
+      genres: ['Anak-anak', 'Komedi', 'Petualangan'],
+      progress: 44,
+    }),
   },
   {
     id: 'fast-x-landscape',
     title: 'Fast X',
     rating: '4.2',
     image: tmdbImage('4XM8DUTQb3lhLemJC51Jx4a2EuA.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('4XM8DUTQb3lhLemJC51Jx4a2EuA.jpg', 'w780'),
+      duration: '2j 21m',
+      genres: ['Aksi', 'Kejahatan', 'Petualangan'],
+      progress: 56,
+    }),
   },
   {
     id: 'alice-landscape',
     title: 'Alice in Borderland',
     rating: '4.6',
     image: tmdbImage('QZaPkNUvhdcKONuO2fXuqtcQRo.jpg', 'w780'),
+    hoverPreview: continueHoverPreview({
+      previewImage: tmdbImage('QZaPkNUvhdcKONuO2fXuqtcQRo.jpg', 'w780'),
+      duration: '50m',
+      genres: ['Thriller', 'Drama', 'Fantasi'],
+      progress: 37,
+    }),
   },
 ]
 
