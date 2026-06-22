@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import MovieCard from '../movie/MovieCard.jsx'
+import MovieCard from './MovieCard.jsx'
 
 function MovieSection({ title, movies, variant = 'poster' }) {
   const viewportRef = useRef(null)

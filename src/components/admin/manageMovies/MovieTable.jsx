@@ -1,4 +1,12 @@
 function getMovieGenre(movie) {
+  if (typeof movie.genres === 'string') {
+    return movie.genres || '-'
+  }
+
+  if (Array.isArray(movie.genres)) {
+    return movie.genres.join(', ')
+  }
+
   if (movie.genre) {
     return movie.genre
   }
@@ -6,7 +14,11 @@ function getMovieGenre(movie) {
   return movie.hoverPreview?.genres?.join(', ') ?? '-'
 }
 
-function MovieTable({ movies, onEdit, onDelete }) {
+function getMovieSection(movie) {
+  return movie.sectionTitle || movie.section || movie.category || '-'
+}
+
+function MovieTable({ isBusy = false, movies, onEdit, onDelete }) {
   if (!movies.length) {
     return (
       <div className="rounded-xl border border-dashed border-white/15 bg-[#181a1c] p-8 text-center text-[#c1c2c4]">
@@ -40,6 +52,8 @@ function MovieTable({ movies, onEdit, onDelete }) {
                 <p className="mt-1 truncate text-xs text-[#8f969a]">{getMovieGenre(movie)}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#c1c2c4]">
                   <span>Rating: {movie.rating || '-'}</span>
+                  <span>Type: {movie.previewType || '-'}</span>
+                  <span>Section: {getMovieSection(movie)}</span>
                   {movie.badge ? (
                     <span className="rounded-full bg-[#0f1e93] px-2 py-0.5 font-bold text-white">
                       {movie.badge}
@@ -54,6 +68,7 @@ function MovieTable({ movies, onEdit, onDelete }) {
             <div className="flex justify-end gap-2 max-[640px]:justify-start max-[420px]:grid max-[420px]:grid-cols-2">
               <button
                 className="rounded-full border border-white/15 px-3 py-2 text-xs font-bold text-white transition-[background,border-color] duration-150 hover:border-white/50 hover:bg-white/10"
+                disabled={isBusy}
                 onClick={() => onEdit(movie)}
                 type="button"
               >
@@ -61,6 +76,7 @@ function MovieTable({ movies, onEdit, onDelete }) {
               </button>
               <button
                 className="rounded-full border border-[#b71f1d]/50 px-3 py-2 text-xs font-bold text-[#ff7775] transition-[background,border-color] duration-150 hover:border-[#ff7775] hover:bg-[#b71f1d]/15"
+                disabled={isBusy}
                 onClick={() => onDelete(movie.id)}
                 type="button"
               >

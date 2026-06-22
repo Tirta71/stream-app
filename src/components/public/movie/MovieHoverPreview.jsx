@@ -50,6 +50,7 @@ function MovieHoverPreview({
   previewImage = image,
   ageRating = '13+',
   episodeCount,
+  episodeTitle,
   duration,
   genres = [],
   placement = 'center',
@@ -106,13 +107,18 @@ function MovieHoverPreview({
 
         {isContinue ? (
           <>
-            <div className="mt-[28px] flex items-center gap-[18px]">
+            {episodeTitle ? (
+              <p className="mt-[15px] text-lg font-bold tracking-[0.2px] text-white">
+                {episodeTitle}
+              </p>
+            ) : null}
+            <div className={`${episodeTitle ? 'mt-[23px]' : 'mt-[28px]'} flex items-center gap-[18px]`}>
               <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-[#41484a]">
                 <div className="h-full rounded-full bg-[#3254ff]" style={{ width: `${progress}%` }} />
               </div>
               <span className="text-lg font-medium tracking-[0.2px] text-[#c1c2c4]">{metaText}</span>
             </div>
-            <GenreRow genres={genres} />
+            <GenreRow genres={genres} compact={Boolean(episodeTitle)} />
           </>
         ) : (
           <>

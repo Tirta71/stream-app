@@ -1,7 +1,0 @@
-export { default as AdminCategorySelect } from './controls/AdminCategorySelect.jsx'
-export { default as AdminPagination } from './controls/AdminPagination.jsx'
-export { default as AdminFooter } from './layout/AdminFooter.jsx'
-export { default as AdminNavbar } from './layout/AdminNavbar.jsx'
-export { default as AdminPageHeader } from './layout/AdminPageHeader.jsx'
-export { default as MovieForm } from './movies/MovieForm.jsx'
-export { default as MovieTable } from './movies/MovieTable.jsx'
