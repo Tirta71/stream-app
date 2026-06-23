@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  createMovie,
-  deleteMovie,
-  getMovies,
-  updateMovie,
-} from "../../services/movieApi.js";
+  addMovie,
+  editMovie,
+  fetchMovies,
+  removeMovie,
+  selectMovies,
+  selectMoviesError,
+  selectMoviesStatus,
+} from "../../store/redux/moviesSlice.js";
 
 const moviePageSize = 7;
 
@@ -19,6 +23,10 @@ function createMovieSlug(title) {
 }
 
 function getErrorMessage(error, fallbackMessage) {
+  if (typeof error === "string") {
+    return error;
+  }
+
   if (error instanceof Error && error.message) {
     return error.message;
   }
@@ -70,48 +78,28 @@ function getPaginatedMovies(movies, currentPage) {
 }
 
 function useManageMovies() {
-  const [movies, setMovies] = useState([]);
+  const dispatch = useDispatch();
+  const movies = useSelector(selectMovies);
+  const moviesStatus = useSelector(selectMoviesStatus);
+  const moviesError = useSelector(selectMoviesError);
   const [editingMovie, setEditingMovie] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const isLoading = moviesStatus === "idle" || moviesStatus === "loading";
+  const visibleErrorMessage =
+    errorMessage || (moviesStatus === "failed" ? moviesError : "");
   const { activePage, paginatedMovies, totalPages } = getPaginatedMovies(
     movies,
     currentPage,
   );
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadMovies() {
-      setIsLoading(true);
-      setErrorMessage("");
-
-      try {
-        const moviesData = await getMovies();
-
-        if (isMounted) {
-          setMovies(Array.isArray(moviesData) ? moviesData : []);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setErrorMessage(getErrorMessage(error, "Gagal mengambil data movie"));
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+    if (moviesStatus === "idle") {
+      dispatch(fetchMovies());
     }
-
-    loadMovies();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  }, [dispatch, moviesStatus]);
 
   const handleSubmitMovie = async (movie) => {
     const moviePayload = getMoviePayload(movie);
@@ -122,22 +110,21 @@ function useManageMovies() {
 
     try {
       if (editingMovie) {
-        const updatedMovie = await updateMovie(editingMovie.id, moviePayload);
+        await dispatch(
+          editMovie({
+            id: editingMovie.id,
+            movie: moviePayload,
+          }),
+        ).unwrap();
 
-        setMovies((currentMovies) =>
-          currentMovies.map((currentMovie) =>
-            currentMovie.id === editingMovie.id ? updatedMovie : currentMovie,
-          ),
-        );
         setCurrentPage(1);
         setEditingMovie(null);
         setStatusMessage("Movie berhasil diupdate");
         return true;
       }
 
-      const createdMovie = await createMovie(moviePayload);
+      await dispatch(addMovie(moviePayload)).unwrap();
 
-      setMovies((currentMovies) => [...currentMovies, createdMovie]);
       setCurrentPage(Math.max(1, Math.ceil((movies.length + 1) / moviePageSize)));
       setStatusMessage("Movie berhasil ditambahkan");
       return true;
@@ -160,10 +147,7 @@ function useManageMovies() {
     setStatusMessage("");
 
     try {
-      await deleteMovie(movieId);
-      setMovies((currentMovies) =>
-        currentMovies.filter((movie) => movie.id !== movieId),
-      );
+      await dispatch(removeMovie(movieId)).unwrap();
       setCurrentPage((currentValue) =>
         Math.min(
           currentValue,
@@ -191,7 +175,7 @@ function useManageMovies() {
     activePage,
     currentPage,
     editingMovie,
-    errorMessage,
+    errorMessage: visibleErrorMessage,
     handleCancelEdit,
     handleDeleteMovie,
     handleEditMovie,
