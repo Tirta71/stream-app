@@ -32,11 +32,11 @@ function Footer() {
 
   const getLinksClassName = (groupName, isGenre = false) =>
     [
-      "grid gap-[13px] text-base text-[rgba(193,194,196,0.88)] max-[900px]:gap-2.5 max-[900px]:pt-3 max-[900px]:text-[13px]",
+      "grid gap-[13px] text-base text-[rgba(193,194,196,0.88)] max-[640px]:gap-2.5 max-[640px]:pt-3 max-[640px]:text-[13px]",
       isGenre
-        ? "grid-cols-[repeat(4,minmax(120px,1fr))] max-[900px]:grid-cols-2"
+        ? "grid-cols-[repeat(4,minmax(120px,1fr))] max-[640px]:grid-cols-2"
         : "",
-      openGroup === groupName ? "max-[900px]:grid" : "max-[900px]:hidden",
+      openGroup === groupName ? "max-[640px]:grid" : "max-[640px]:hidden",
     ]
       .filter(Boolean)
       .join(" ");
@@ -63,7 +63,7 @@ function Footer() {
       <nav className="block" aria-label="Genre">
         <button
           type="button"
-          className="mb-[15px] flex w-full items-center justify-start bg-transparent p-0 text-left text-base font-bold text-white max-[900px]:m-0 max-[900px]:min-h-6 max-[900px]:justify-between"
+          className="mb-[15px] flex w-full items-center justify-start bg-transparent p-0 text-left text-base font-bold text-white max-[640px]:m-0 max-[640px]:min-h-6 max-[640px]:justify-between"
           aria-controls="footer-genre-links"
           aria-expanded={openGroup === "genre"}
           onClick={() => toggleGroup("genre")}
@@ -72,8 +72,8 @@ function Footer() {
           <svg
             viewBox="0 0 24 24"
             aria-hidden="true"
-            className={`hidden h-5 w-5 shrink-0 fill-none stroke-current transition-transform duration-[160ms] [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2] max-[900px]:block ${
-              openGroup === "genre" ? "max-[900px]:rotate-90" : ""
+            className={`hidden h-5 w-5 shrink-0 fill-none stroke-current transition-transform duration-[160ms] [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2] min-[641px]:!hidden max-[640px]:block ${
+              openGroup === "genre" ? "max-[640px]:rotate-90" : ""
             }`}
           >
             <path d="m9 6 6 6-6 6" />
@@ -98,7 +98,7 @@ function Footer() {
       <nav className="block" aria-label="Bantuan">
         <button
           type="button"
-          className="mb-[15px] flex w-full items-center justify-start bg-transparent p-0 text-left text-base font-bold text-white max-[900px]:m-0 max-[900px]:min-h-6 max-[900px]:justify-between"
+          className="mb-[15px] flex w-full items-center justify-start bg-transparent p-0 text-left text-base font-bold text-white max-[640px]:m-0 max-[640px]:min-h-6 max-[640px]:justify-between"
           aria-controls="footer-help-links"
           aria-expanded={openGroup === "help"}
           onClick={() => toggleGroup("help")}
@@ -107,8 +107,8 @@ function Footer() {
           <svg
             viewBox="0 0 24 24"
             aria-hidden="true"
-            className={`hidden h-5 w-5 shrink-0 fill-none stroke-current transition-transform duration-[160ms] [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2] max-[900px]:block ${
-              openGroup === "help" ? "max-[900px]:rotate-90" : ""
+            className={`hidden h-5 w-5 shrink-0 fill-none stroke-current transition-transform duration-[160ms] [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2] min-[641px]:!hidden max-[640px]:block ${
+              openGroup === "help" ? "max-[640px]:rotate-90" : ""
             }`}
           >
             <path d="m9 6 6 6-6 6" />

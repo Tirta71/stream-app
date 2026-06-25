@@ -1,3 +1,5 @@
+import { replaceBrokenImage } from '../../../utils/imageFallback.js'
+
 function getMovieGenre(movie) {
   if (typeof movie.genres === 'string') {
     return movie.genres || '-'
@@ -16,6 +18,15 @@ function getMovieGenre(movie) {
 
 function getMovieSection(movie) {
   return movie.sectionTitle || movie.section || movie.category || '-'
+}
+
+function getBadgeClassName(badge) {
+  const isPremiumBadge = badge?.trim().toLowerCase() === 'premium'
+
+  return [
+    'rounded-full px-2 py-0.5 font-bold text-white',
+    isPremiumBadge ? 'bg-[#B7A207]' : 'bg-[#0f1e93]',
+  ].join(' ')
 }
 
 function MovieTable({ isBusy = false, movies, onEdit, onDelete }) {
@@ -45,6 +56,7 @@ function MovieTable({ isBusy = false, movies, onEdit, onDelete }) {
                 alt=""
                 className="h-14 w-20 shrink-0 rounded object-cover max-[420px]:h-12 max-[420px]:w-[68px]"
                 loading="lazy"
+                onError={(event) => replaceBrokenImage(event, movie.previewImage)}
                 src={movie.image}
               />
               <div className="min-w-0">
@@ -52,10 +64,11 @@ function MovieTable({ isBusy = false, movies, onEdit, onDelete }) {
                 <p className="mt-1 truncate text-xs text-[#8f969a]">{getMovieGenre(movie)}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#c1c2c4]">
                   <span>Rating: {movie.rating || '-'}</span>
-                  <span>Type: {movie.previewType || '-'}</span>
+                  <span>Type: {movie.type || '-'}</span>
+                  <span>Preview: {movie.previewType || '-'}</span>
                   <span>Section: {getMovieSection(movie)}</span>
                   {movie.badge ? (
-                    <span className="rounded-full bg-[#0f1e93] px-2 py-0.5 font-bold text-white">
+                    <span className={getBadgeClassName(movie.badge)}>
                       {movie.badge}
                     </span>
                   ) : (

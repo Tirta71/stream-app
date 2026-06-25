@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import MovieCard from './MovieCard.jsx'
 
-function MovieSection({ title, movies, variant = 'poster' }) {
+function MovieSection({
+  title,
+  movies,
+  onShowSeriesDetail,
+  variant = 'poster',
+}) {
+  const shouldReduceMotion = useReducedMotion()
   const viewportRef = useRef(null)
   const railRef = useRef(null)
   const [offset, setOffset] = useState(0)
@@ -11,6 +18,56 @@ function MovieSection({ title, movies, variant = 'poster' }) {
   const sectionId = `movie-section-${title.toLowerCase().replaceAll(' ', '-')}`
   const railId = `${sectionId}-rail`
   const visibleCardCount = isLandscape ? 4 : 5
+  const staggerContainerProps = shouldReduceMotion
+    ? {}
+    : {
+        animate: 'show',
+        initial: 'hidden',
+        variants: {
+          hidden: {},
+          show: {
+            transition: {
+              delayChildren: 0.08,
+              staggerChildren: 0.055,
+            },
+          },
+        },
+      }
+  const staggerCardProps = shouldReduceMotion
+    ? {}
+    : {
+        variants: {
+          hidden: { opacity: 0, scale: 0.985, y: 18 },
+          show: {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
+          },
+        },
+      }
+
+  const getCardStep = (rail) => {
+    const firstCard = rail.querySelector('[data-movie-card]')
+    const railStyle = window.getComputedStyle(rail)
+    const gap = Number.parseFloat(railStyle.columnGap || railStyle.gap) || 0
+    const cardWidth = firstCard?.getBoundingClientRect().width || rail.clientWidth
+
+    return cardWidth + gap
+  }
+
+  const getMaxRailOffset = (viewport, rail) => {
+    const cards = rail.querySelectorAll('[data-movie-card]')
+    const lastCard = cards[cards.length - 1]
+
+    if (!lastCard) {
+      return 0
+    }
+
+    const lastCardRightEdge = lastCard.offsetLeft + lastCard.offsetWidth
+
+    return Math.max(0, Math.ceil(lastCardRightEdge - viewport.clientWidth))
+  }
 
   useEffect(() => {
     const updateBounds = () => {
@@ -21,7 +78,7 @@ function MovieSection({ title, movies, variant = 'poster' }) {
         return
       }
 
-      const nextMaxOffset = Math.max(0, rail.scrollWidth - viewport.clientWidth)
+      const nextMaxOffset = getMaxRailOffset(viewport, rail)
       setMaxOffset(nextMaxOffset)
       setOffset((currentOffset) => Math.min(currentOffset, nextMaxOffset))
     }
@@ -42,13 +99,17 @@ function MovieSection({ title, movies, variant = 'poster' }) {
       return
     }
 
-    const firstCard = rail.querySelector('[data-movie-card]')
-    const railStyle = window.getComputedStyle(rail)
-    const gap = Number.parseFloat(railStyle.columnGap || railStyle.gap) || 0
-    const cardWidth = firstCard?.getBoundingClientRect().width || rail.clientWidth
-    const scrollAmount = (cardWidth + gap) * visibleCardCount
+    const cardStep = getCardStep(rail)
+    const nextMaxOffset = getMaxRailOffset(viewport, rail)
+    const scrollAmount = cardStep * visibleCardCount
 
-    setOffset((currentOffset) => Math.max(0, Math.min(currentOffset + direction * scrollAmount, maxOffset)))
+    setMaxOffset(nextMaxOffset)
+    setOffset((currentOffset) => {
+      const requestedOffset = currentOffset + direction * scrollAmount
+      const nextOffset = Math.max(0, Math.min(requestedOffset, nextMaxOffset))
+
+      return nextOffset
+    })
   }
 
   const sectionClassName = [
@@ -96,23 +157,26 @@ function MovieSection({ title, movies, variant = 'poster' }) {
 
       <div
         ref={viewportRef}
+        data-movie-section-viewport
         className={viewportClassName}
       >
-        <div
+        <motion.div
           ref={railRef}
           id={railId}
           className={railClassName}
           style={{ transform: `translate3d(${-offset}px, 0, 0)` }}
+          {...staggerContainerProps}
         >
-          {movies.map((movie, index) => {
-            const slotIndex = index % visibleCardCount
-            const hoverPlacement = slotIndex === 0 ? 'start' : slotIndex === visibleCardCount - 1 ? 'end' : 'center'
-
-            return (
-              <MovieCard key={movie.id} {...movie} variant={variant} hoverPlacement={hoverPlacement} />
-            )
-          })}
-        </div>
+          {movies.map((movie) => (
+            <MovieCard
+              key={movie.id}
+              {...movie}
+              motionProps={staggerCardProps}
+              onShowSeriesDetail={onShowSeriesDetail}
+              variant={variant}
+            />
+          ))}
+        </motion.div>
       </div>
 
       <button

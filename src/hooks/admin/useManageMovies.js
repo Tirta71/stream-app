@@ -12,6 +12,18 @@ import {
 
 const moviePageSize = 7;
 
+const adminPageSections = {
+  home: ["continueWatching", "topRatedMovies", "trendingMovies", "newReleases"],
+  movie: ["continueWatching", "topRatedMovies", "trendingMovies", "newReleases"],
+  series: [
+    "continueWatching",
+    "seriesFeatured",
+    "topRatedMovies",
+    "trendingMovies",
+    "newReleases",
+  ],
+};
+
 function createMovieSlug(title) {
   const slug = title
     .toLowerCase()
@@ -34,16 +46,31 @@ function getErrorMessage(error, fallbackMessage) {
   return fallbackMessage;
 }
 
+function getResolvedPreviewType(movie, section) {
+  const episodeCount = movie.episodeCount?.trim().toLowerCase() ?? "";
+
+  if (section === "continueWatching" || movie.previewType === "continue") {
+    return "continue";
+  }
+
+  if (
+    movie.type === "series" ||
+    movie.previewType === "series" ||
+    (episodeCount && episodeCount !== "movie")
+  ) {
+    return "series";
+  }
+
+  return "movie";
+}
+
 function getMoviePayload(movie) {
   const progress = Number(movie.progress);
-  const payload = { ...movie };
   const section = movie.section.trim();
 
-  delete payload.category;
-
   return {
-    ...payload,
     slug: movie.slug?.trim() || createMovieSlug(movie.title),
+    type: movie.type?.trim() || "movie",
     section,
     sectionTitle: movie.sectionTitle.trim(),
     title: movie.title.trim(),
@@ -59,10 +86,35 @@ function getMoviePayload(movie) {
     episodeTitle: movie.episodeTitle?.trim() ?? "",
     genres: movie.genres?.trim() ?? "",
     progress: Number.isFinite(progress) ? progress : 0,
-    previewType:
-      movie.previewType ||
-      (section === "continueWatching" ? "continue" : "movie"),
+    previewType: getResolvedPreviewType(movie, section),
   };
+}
+
+function getMovieType(movie) {
+  return movie.type || (movie.previewType === "series" ? "series" : "movie");
+}
+
+function getFilteredMovies(movies, pageFilter, sectionFilter) {
+  return movies.filter((movie) => {
+    const section = movie.section || movie.category || "";
+    const type = getMovieType(movie);
+    const isInSection =
+      sectionFilter === "all" ? true : section === sectionFilter;
+
+    if (!isInSection) {
+      return false;
+    }
+
+    if (pageFilter === "series") {
+      return type === "series" && adminPageSections.series.includes(section);
+    }
+
+    if (pageFilter === "movie") {
+      return type === "movie" && adminPageSections.movie.includes(section);
+    }
+
+    return adminPageSections.home.includes(section);
+  });
 }
 
 function getPaginatedMovies(movies, currentPage) {
@@ -84,14 +136,17 @@ function useManageMovies() {
   const moviesError = useSelector(selectMoviesError);
   const [editingMovie, setEditingMovie] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageFilter, setPageFilter] = useState("home");
+  const [sectionFilter, setSectionFilter] = useState("all");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const isLoading = moviesStatus === "idle" || moviesStatus === "loading";
   const visibleErrorMessage =
     errorMessage || (moviesStatus === "failed" ? moviesError : "");
+  const filteredMovies = getFilteredMovies(movies, pageFilter, sectionFilter);
   const { activePage, paginatedMovies, totalPages } = getPaginatedMovies(
-    movies,
+    filteredMovies,
     currentPage,
   );
 
@@ -141,6 +196,17 @@ function useManageMovies() {
     setStatusMessage("");
   };
 
+  const handlePageFilterChange = (nextPageFilter) => {
+    setPageFilter(nextPageFilter);
+    setSectionFilter("all");
+    setCurrentPage(1);
+  };
+
+  const handleSectionFilterChange = (nextSectionFilter) => {
+    setSectionFilter(nextSectionFilter);
+    setCurrentPage(1);
+  };
+
   const handleDeleteMovie = async (movieId) => {
     setIsSubmitting(true);
     setErrorMessage("");
@@ -179,15 +245,20 @@ function useManageMovies() {
     handleCancelEdit,
     handleDeleteMovie,
     handleEditMovie,
+    handlePageFilterChange,
+    handleSectionFilterChange,
     handleSubmitMovie,
     isLoading,
     isSubmitting,
     moviePageSize,
     movies,
+    pageFilter,
     paginatedMovies,
+    sectionFilter,
     setCurrentPage,
     statusMessage,
     totalPages,
+    totalVisibleMovies: filteredMovies.length,
   };
 }
 

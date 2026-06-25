@@ -2,6 +2,7 @@ import { useState } from "react";
 
 const emptyForm = {
   slug: "",
+  type: "movie",
   section: "",
   sectionTitle: "",
   title: "",
@@ -34,21 +35,45 @@ const episodeCountOptions = [
 
 const sectionOptions = [
   {
+    titleByType: {
+      movie: "Melanjutkan Tonton Film",
+      series: "Melanjutkan Tonton Series",
+    },
     section: "continueWatching",
-    sectionTitle: "Melanjutkan Tonton Film",
   },
   {
+    titleByType: {
+      movie: "Top Rating Film dan Series Hari ini",
+      series: "Top Rating Series Hari ini",
+    },
     section: "topRatedMovies",
-    sectionTitle: "Top Rating Film dan Series Hari ini",
   },
   {
+    titleByType: {
+      movie: "Film Trending",
+      series: "Series Trending",
+    },
     section: "trendingMovies",
-    sectionTitle: "Film Trending",
   },
   {
+    titleByType: {
+      movie: "Rilis Baru",
+      series: "Rilis Baru",
+    },
     section: "newReleases",
-    sectionTitle: "Rilis Baru",
   },
+  {
+    onlyForType: "series",
+    section: "seriesFeatured",
+    titleByType: {
+      series: "Series Persembahan Chill",
+    },
+  },
+];
+
+const typeOptions = [
+  { label: "Movie", value: "movie" },
+  { label: "Series", value: "series" },
 ];
 
 function getMovieGenres(movie) {
@@ -74,6 +99,7 @@ function getFormState(movie) {
 
   return {
     slug: movie.slug ?? "",
+    type: movie.type ?? (movie.previewType === "series" ? "series" : "movie"),
     section: movie.section ?? movie.category ?? "",
     sectionTitle: movie.sectionTitle ?? "",
     title: movie.title ?? "",
@@ -110,6 +136,16 @@ function getSectionOption(section) {
   return sectionOptions.find((option) => option.section === section);
 }
 
+function getSectionTitle(option, type) {
+  return option?.titleByType?.[type] ?? "";
+}
+
+function getVisibleSectionOptions(type) {
+  return sectionOptions.filter(
+    (option) => !option.onlyForType || option.onlyForType === type,
+  );
+}
+
 function MovieForm({
   onSubmit,
   editingMovie,
@@ -128,9 +164,39 @@ function MovieForm({
     };
   });
   const isEditing = Boolean(editingMovie);
+  const visibleSectionOptions = getVisibleSectionOptions(formData.type);
 
   const handleInputChange = (event) => {
     const { checked, name, type, value } = event.target;
+
+    if (name === "type") {
+      const nextSectionOptions = getVisibleSectionOptions(value);
+      const isCurrentSectionValid = nextSectionOptions.some(
+        (option) => option.section === formData.section,
+      );
+      const selectedSection = isCurrentSectionValid
+        ? getSectionOption(formData.section)
+        : nextSectionOptions[0];
+      const nextSection = selectedSection?.section ?? "";
+
+      setFormData((currentData) => ({
+        ...currentData,
+        type: value,
+        section: nextSection,
+        sectionTitle: getSectionTitle(selectedSection, value),
+        episodeCount:
+          value === "series" && currentData.episodeCount === "Movie"
+            ? "16 Episode"
+            : currentData.episodeCount,
+        previewType:
+          nextSection === "continueWatching"
+            ? "continue"
+            : value === "series"
+              ? "series"
+              : "movie",
+      }));
+      return;
+    }
 
     if (name === "section") {
       const selectedSection = getSectionOption(value);
@@ -138,7 +204,13 @@ function MovieForm({
       setFormData((currentData) => ({
         ...currentData,
         section: value,
-        sectionTitle: selectedSection?.sectionTitle ?? "",
+        sectionTitle: getSectionTitle(selectedSection, currentData.type),
+        previewType:
+          value === "continueWatching"
+            ? "continue"
+            : currentData.type === "series"
+              ? "series"
+              : "movie",
       }));
       return;
     }
@@ -156,6 +228,7 @@ function MovieForm({
     const wasSaved = await onSubmit({
       ...editingMovie,
       slug: formData.slug.trim(),
+      type: formData.type,
       section: formData.section.trim(),
       sectionTitle: formData.sectionTitle.trim(),
       title: formData.title.trim(),
@@ -201,6 +274,22 @@ function MovieForm({
       </div>
 
       <div className="grid gap-4 max-[640px]:gap-3 md:grid-cols-2">
+        <MovieFormField label="Type">
+          <select
+            className={inputClassName}
+            name="type"
+            onChange={handleInputChange}
+            required
+            value={formData.type}
+          >
+            {typeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </MovieFormField>
+
         <MovieFormField label="Section Homepage">
           <select
             className={inputClassName}
@@ -210,9 +299,9 @@ function MovieForm({
             value={formData.section}
           >
             <option value="">Pilih section homepage</option>
-            {sectionOptions.map((option) => (
+            {visibleSectionOptions.map((option) => (
               <option key={option.section} value={option.section}>
-                {option.sectionTitle}
+                {getSectionTitle(option, formData.type)}
               </option>
             ))}
           </select>

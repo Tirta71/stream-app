@@ -2,11 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import logo from "../../../assets/img/logo/Logo.png";
 import logoMobile from "../../../assets/img/logo/logo_mobile.png";
+import GenreDropdown from "../ui/GenreDropdown.jsx";
 
 const profileAvatarUrl =
   "https://api.dicebear.com/9.x/adventurer/svg?seed=ChillProfile";
 
-function Navbar() {
+const getNavLinkClassName = ({ isActive }) =>
+  [
+    "py-3 transition-colors duration-[160ms] hover:text-white max-[760px]:whitespace-nowrap max-[760px]:py-2.5",
+    isActive ? "font-bold text-white" : "text-white/85",
+  ].join(" ");
+
+function Navbar({
+  genreOptions = [],
+  onGenreSelect,
+  selectedGenre = "",
+  showGenreMenu = false,
+}) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navbarRef = useRef(null);
 
@@ -65,23 +77,33 @@ function Navbar() {
         aria-label="Primary navigation"
       >
         <NavLink
-          className="py-3 text-white/85 transition-colors duration-[160ms] hover:text-white max-[760px]:whitespace-nowrap max-[760px]:py-2.5"
-          to="/"
+          className={getNavLinkClassName}
+          to="/series"
         >
           Series
         </NavLink>
         <NavLink
-          className="py-3 text-white/85 transition-colors duration-[160ms] hover:text-white max-[760px]:whitespace-nowrap max-[760px]:py-2.5"
-          to="/"
+          className={getNavLinkClassName}
+          to="/film"
         >
           Film
         </NavLink>
         <NavLink
-          className="py-3 text-white/85 transition-colors duration-[160ms] hover:text-white max-[760px]:whitespace-nowrap max-[760px]:py-2.5"
-          to="/"
+          className={getNavLinkClassName}
+          to="/daftar-saya"
         >
           Daftar Saya
         </NavLink>
+        {showGenreMenu ? (
+          <GenreDropdown
+            buttonClassName="!bg-transparent !px-0 py-3 text-lg font-medium hover:!bg-transparent max-[760px]:!gap-1 max-[760px]:!px-0 max-[760px]:py-2.5 max-[760px]:text-[10px] max-[760px]:[&_svg]:h-3 max-[760px]:[&_svg]:w-3"
+            className="min-[761px]:hidden"
+            genres={genreOptions}
+            menuClassName="!fixed !left-5 !right-5 !top-14 !mt-0 !w-auto max-h-[calc(100svh-64px)] grid-cols-2 overflow-y-auto rounded-lg py-2 text-[11px] shadow-[0_18px_40px_rgba(0,0,0,0.48)]"
+            onSelect={onGenreSelect}
+            selectedGenre={selectedGenre}
+          />
+        ) : null}
       </nav>
 
       <div className="ml-auto flex items-center gap-3 max-[760px]:gap-1">

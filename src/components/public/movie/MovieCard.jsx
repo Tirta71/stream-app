@@ -1,39 +1,110 @@
-import MovieHoverPreview from './MovieHoverPreview.jsx'
+import { useRef, useState } from "react";
+import { motion } from "motion/react";
+import { replaceBrokenImage } from "../../../utils/imageFallback.js";
+import MovieHoverPreview from "./MovieHoverPreview.jsx";
 
-function MovieCard({ title, image, rating, badge, top, variant, hoverPreview, hoverPlacement = 'center' }) {
-  const isLandscape = variant === 'landscape'
-  const hasHoverPreview = Boolean(hoverPreview)
+const hoverPreviewWidth = 409;
+
+function clampNumber(value, minValue, maxValue) {
+  return Math.max(minValue, Math.min(value, maxValue));
+}
+
+function MovieCard({
+  detail,
+  title,
+  image,
+  rating,
+  badge,
+  top,
+  variant,
+  hoverPreview,
+  hoverPlacement = "center",
+  motionProps = {},
+  onShowSeriesDetail,
+  size = "default",
+}) {
+  const cardRef = useRef(null);
+  const [hoverLeftOffset, setHoverLeftOffset] = useState(null);
+  const isLandscape = variant === "landscape";
+  const isCompact = size === "compact";
+  const hasHoverPreview = Boolean(hoverPreview);
+  const isPremiumBadge = badge?.trim().toLowerCase() === "premium";
   const sizeClassName = isLandscape
-    ? 'h-[162px] w-[302px] min-[641px]:max-[900px]:h-[82px] min-[641px]:max-[900px]:w-[155px] max-[640px]:h-[151px] max-[640px]:w-[309px]'
-    : 'h-[365px] w-[232px] min-[641px]:max-[900px]:h-[187px] min-[641px]:max-[900px]:w-[120px] max-[640px]:h-[143.4px] max-[640px]:w-[95.6px]'
+    ? "h-[162px] w-[302px] min-[641px]:max-[900px]:h-[82px] min-[641px]:max-[900px]:w-[155px] max-[640px]:h-[151px] max-[640px]:w-[309px]"
+    : isCompact
+      ? "aspect-[2/3] h-auto w-full min-[641px]:max-[900px]:h-[187px] min-[641px]:max-[900px]:w-[120px]"
+    : "h-[365px] w-[232px] min-[641px]:max-[900px]:h-[187px] min-[641px]:max-[900px]:w-[120px] max-[640px]:h-[143.4px] max-[640px]:w-[95.6px]";
   const cardClassName = [
-    'group/movie-card relative flex-none',
+    "group/movie-card relative flex-none",
     sizeClassName,
-    hasHoverPreview ? 'overflow-visible z-0 hover:z-30 focus-within:z-30' : '',
-  ].join(' ')
+    hasHoverPreview ? "overflow-visible z-0 hover:z-30 focus-within:z-30" : "",
+  ].join(" ");
   const frameClassName = [
-    'relative h-full w-full overflow-hidden bg-[#202124] transition-[box-shadow,filter,transform] duration-200 [transform:translateZ(0)]',
-    isLandscape ? 'rounded-lg shadow-none' : 'rounded shadow-none',
+    "relative h-full w-full overflow-hidden bg-[#202124] transition-[box-shadow,filter,transform] duration-200 [transform:translateZ(0)]",
+    isLandscape ? "rounded-lg shadow-none" : "rounded shadow-none",
     hasHoverPreview
-      ? 'min-[901px]:group-hover/movie-card:scale-[1.018] min-[901px]:group-hover/movie-card:shadow-[0_18px_48px_rgba(0,0,0,0.34)] min-[901px]:group-focus-within/movie-card:scale-[1.018] min-[901px]:group-focus-within/movie-card:shadow-[0_18px_48px_rgba(0,0,0,0.34)]'
-      : '',
+      ? "min-[901px]:group-hover/movie-card:scale-[1.018] min-[901px]:group-hover/movie-card:shadow-[0_18px_48px_rgba(0,0,0,0.34)] min-[901px]:group-focus-within/movie-card:scale-[1.018] min-[901px]:group-focus-within/movie-card:shadow-[0_18px_48px_rgba(0,0,0,0.34)]"
+      : "",
     isLandscape
       ? "after:pointer-events-none after:absolute after:inset-0 after:bg-[linear-gradient(180deg,rgba(0,0,0,0)_38%,rgba(0,0,0,0.72)_100%)] after:content-['']"
-      : '',
-  ].join(' ')
+      : "",
+  ].join(" ");
+  const badgeClassName = [
+    "absolute left-4 top-4 z-[2] inline-flex min-h-7 items-center rounded-full border px-2.5 py-1 text-sm font-bold leading-[1.4] tracking-[0.2px] text-white min-[641px]:max-[900px]:left-2 min-[641px]:max-[900px]:top-2 min-[641px]:max-[900px]:w-[104px] min-[641px]:max-[900px]:origin-top-left min-[641px]:max-[900px]:scale-50 min-[641px]:max-[900px]:justify-center min-[641px]:max-[900px]:p-0 max-[640px]:left-[7px] max-[640px]:top-[7px] max-[640px]:w-[104px] max-[640px]:origin-top-left max-[640px]:scale-[0.4285] max-[640px]:justify-center max-[640px]:p-0",
+    isPremiumBadge
+      ? "border-[#B7A207] bg-[#B7A207]"
+      : "border-[#0f1e93] bg-[#0f1e93]",
+  ].join(" ");
+
+  const updateHoverPlacement = () => {
+    const card = cardRef.current;
+
+    if (!card || !hasHoverPreview) {
+      return;
+    }
+
+    const boundary =
+      card.closest("[data-movie-section-viewport]") ?? document.documentElement;
+    const boundaryBounds = boundary.getBoundingClientRect();
+    const cardBounds = card.getBoundingClientRect();
+    const centeredLeftOffset = cardBounds.width / 2 - hoverPreviewWidth / 2;
+    const minLeftOffset = boundaryBounds.left - cardBounds.left;
+    const maxLeftOffset = boundaryBounds.right - cardBounds.left - hoverPreviewWidth;
+
+    setHoverLeftOffset(
+      clampNumber(centeredLeftOffset, minLeftOffset, maxLeftOffset),
+    );
+  };
+  const handleShowDetail = () => {
+    if (hoverPreview?.contentType === "series" && detail) {
+      onShowSeriesDetail?.(detail);
+    }
+  };
 
   return (
-    <article className={cardClassName} aria-label={title} data-movie-card tabIndex={hasHoverPreview ? 0 : undefined}>
+    <motion.article
+      ref={cardRef}
+      className={cardClassName}
+      aria-label={title}
+      data-movie-card
+      onFocus={updateHoverPlacement}
+      onPointerEnter={updateHoverPlacement}
+      tabIndex={hasHoverPreview ? 0 : undefined}
+      {...motionProps}
+    >
       <div className={frameClassName}>
         <img
           className="h-full w-full object-cover [backface-visibility:hidden]"
           src={image}
           alt={title}
           loading="lazy"
+          onError={(event) =>
+            replaceBrokenImage(event, hoverPreview?.previewImage)
+          }
         />
 
         {badge ? (
-          <span className="absolute left-4 top-4 z-[2] inline-flex min-h-7 items-center rounded-full border border-[#0f1e93] bg-[#0f1e93] px-2.5 py-1 text-sm font-bold leading-[1.4] tracking-[0.2px] text-white min-[641px]:max-[900px]:left-2 min-[641px]:max-[900px]:top-2 min-[641px]:max-[900px]:w-[104px] min-[641px]:max-[900px]:origin-top-left min-[641px]:max-[900px]:scale-50 min-[641px]:max-[900px]:justify-center min-[641px]:max-[900px]:p-0 max-[640px]:left-[7px] max-[640px]:top-[7px] max-[640px]:w-[104px] max-[640px]:origin-top-left max-[640px]:scale-[0.4285] max-[640px]:justify-center max-[640px]:p-0">
+          <span className={badgeClassName}>
             {badge}
           </span>
         ) : null}
@@ -65,10 +136,18 @@ function MovieCard({ title, image, rating, badge, top, variant, hoverPreview, ho
       </div>
 
       {hasHoverPreview ? (
-        <MovieHoverPreview title={title} image={image} placement={hoverPlacement} variant={variant} {...hoverPreview} />
+        <MovieHoverPreview
+          title={title}
+          image={image}
+          leftOffset={hoverLeftOffset}
+          onShowDetail={handleShowDetail}
+          placement={hoverPlacement}
+          variant={variant}
+          {...hoverPreview}
+        />
       ) : null}
-    </article>
-  )
+    </motion.article>
+  );
 }
 
-export default MovieCard
+export default MovieCard;

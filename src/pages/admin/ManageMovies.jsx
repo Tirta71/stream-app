@@ -8,6 +8,40 @@ import AdminNavbar from "../../components/admin/layout/AdminNavbar.jsx";
 import AdminPageHeader from "../../components/admin/layout/AdminPageHeader.jsx";
 import useManageMovies from "../../hooks/admin/useManageMovies.js";
 
+const pageFilterOptions = [
+  { label: "Home", value: "home" },
+  { label: "Series", value: "series" },
+  { label: "Movie", value: "movie" },
+];
+
+const sectionFilterOptions = {
+  home: [
+    { label: "Semua section", value: "all" },
+    { label: "Melanjutkan Tonton", value: "continueWatching" },
+    { label: "Top Rating", value: "topRatedMovies" },
+    { label: "Trending", value: "trendingMovies" },
+    { label: "Rilis Baru", value: "newReleases" },
+  ],
+  movie: [
+    { label: "Semua section", value: "all" },
+    { label: "Melanjutkan Tonton Film", value: "continueWatching" },
+    { label: "Top Rating Film", value: "topRatedMovies" },
+    { label: "Film Trending", value: "trendingMovies" },
+    { label: "Rilis Baru", value: "newReleases" },
+  ],
+  series: [
+    { label: "Semua section", value: "all" },
+    { label: "Melanjutkan Tonton Series", value: "continueWatching" },
+    { label: "Series Persembahan Chill", value: "seriesFeatured" },
+    { label: "Top Rating Series", value: "topRatedMovies" },
+    { label: "Series Trending", value: "trendingMovies" },
+    { label: "Rilis Baru", value: "newReleases" },
+  ],
+};
+
+const filterSelectClassName =
+  "min-h-10 rounded-lg border border-white/15 bg-[#202326] px-3 text-sm font-semibold text-white outline-none transition-[border-color,box-shadow] duration-150 focus:border-white/50 focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)]";
+
 function ManageMovies() {
   const {
     activePage,
@@ -16,15 +50,19 @@ function ManageMovies() {
     handleCancelEdit,
     handleDeleteMovie,
     handleEditMovie,
+    handlePageFilterChange,
+    handleSectionFilterChange,
     handleSubmitMovie,
     isLoading,
     isSubmitting,
     moviePageSize,
-    movies,
+    pageFilter,
     paginatedMovies,
+    sectionFilter,
     setCurrentPage,
     statusMessage,
     totalPages,
+    totalVisibleMovies,
   } = useManageMovies();
 
   return (
@@ -54,8 +92,44 @@ function ManageMovies() {
                   Data Movie
                 </h2>
                 <p className="mt-1 text-sm text-[#c1c2c4]">
-                  Kelola semua data movie yang tersimpan.
+                  Kelola data berdasarkan halaman dan section.
                 </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 max-[640px]:w-full">
+                <label className="flex flex-col gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#8f969a]">
+                  Page
+                  <select
+                    className={filterSelectClassName}
+                    onChange={(event) =>
+                      handlePageFilterChange(event.target.value)
+                    }
+                    value={pageFilter}
+                  >
+                    {pageFilterOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="flex flex-col gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#8f969a]">
+                  Section
+                  <select
+                    className={filterSelectClassName}
+                    onChange={(event) =>
+                      handleSectionFilterChange(event.target.value)
+                    }
+                    value={sectionFilter}
+                  >
+                    {sectionFilterOptions[pageFilter].map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </div>
 
@@ -87,7 +161,7 @@ function ManageMovies() {
                   currentPage={activePage}
                   onPageChange={setCurrentPage}
                   pageSize={moviePageSize}
-                  totalItems={movies.length}
+                  totalItems={totalVisibleMovies}
                   totalPages={totalPages}
                 />
               </>

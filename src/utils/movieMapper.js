@@ -1,34 +1,66 @@
-const fallbackSectionTitles = {
-  continueWatching: 'Melanjutkan Tonton Film',
-  topRatedMovies: 'Top Rating Film dan Series Hari ini',
-  trendingMovies: 'Film Trending',
-  newReleases: 'Rilis Baru',
-}
-
-const fallbackSectionOrders = {
-  continueWatching: 1,
-  topRatedMovies: 2,
-  trendingMovies: 3,
-  newReleases: 4,
-}
-
 export function createEmptyHomeSections() {
   return []
 }
 
+export function getNormalizedText(value) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : ''
+}
+
+export function getMovieType(movie) {
+  return getNormalizedText(movie?.type)
+}
+
 export function getMovieSectionKey(movie) {
-  return movie.section || movie.category || ''
+  return movie?.section || movie?.category || ''
 }
 
 export function getMovieSectionTitle(movie) {
-  const sectionKey = getMovieSectionKey(movie)
-
-  return movie.sectionTitle || fallbackSectionTitles[sectionKey] || sectionKey
+  return movie?.sectionTitle || getMovieSectionKey(movie)
 }
 
-function getGenres(genres) {
+export function getBoolean(value) {
+  return value === true || value === 'true'
+}
+
+export function getNumber(value, fallbackValue = 0) {
+  const numberValue = Number(value)
+
+  return Number.isFinite(numberValue) ? numberValue : fallbackValue
+}
+
+function getText(value, fallbackValue = '') {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallbackValue
+}
+
+function getField(movie, snakeKey, camelKey, fallbackValue = '') {
+  return movie?.[snakeKey] ?? movie?.[camelKey] ?? fallbackValue
+}
+
+function getTimestamp(value) {
+  if (!value) {
+    return 0
+  }
+
+  if (typeof value === 'number') {
+    return value > 9999999999 ? value : value * 1000
+  }
+
+  const parsedDate = Date.parse(value)
+
+  return Number.isFinite(parsedDate) ? parsedDate : 0
+}
+
+export function getGenres(genres) {
   if (Array.isArray(genres)) {
-    return genres.filter(Boolean)
+    return genres
+      .map((genre) => {
+        if (typeof genre === 'string') {
+          return genre.trim()
+        }
+
+        return genre?.name || genre?.title || ''
+      })
+      .filter(Boolean)
   }
 
   if (typeof genres === 'string') {
@@ -41,98 +73,323 @@ function getGenres(genres) {
   return []
 }
 
-function getBoolean(value) {
-  return value === true || value === 'true'
+function getEpisodes(movie) {
+  if (Array.isArray(movie?.episodes)) {
+    return movie.episodes
+  }
+
+  if (movie?.episodes && typeof movie.episodes === 'object') {
+    return Object.values(movie.episodes)
+  }
+
+  return []
 }
 
-function getNumber(value, fallbackValue = 0) {
-  const numberValue = Number(value)
+function getPeople(movie) {
+  if (Array.isArray(movie?.people)) {
+    return movie.people
+  }
 
-  return Number.isFinite(numberValue) ? numberValue : fallbackValue
+  if (movie?.people && typeof movie.people === 'object') {
+    return Object.values(movie.people)
+  }
+
+  return []
 }
 
-function getPreviewType(movie) {
+function getPeopleNames(movie, roles) {
+  const roleSet = new Set(roles.map(getNormalizedText))
+
+  return getPeople(movie)
+    .filter((person) => roleSet.has(getNormalizedText(person?.role)))
+    .map((person) => getText(person?.name))
+    .filter(Boolean)
+}
+
+function findEpisode(movie, episodeId) {
+  const episodes = getEpisodes(movie)
+
+  if (!episodeId) {
+    return episodes[0]
+  }
+
   return (
-    movie.previewType ||
-    (getMovieSectionKey(movie) === 'continueWatching'
-      ? 'continue'
-      : movie.episodeCount === 'Movie'
-        ? 'movie'
-        : 'series')
+    episodes.find(
+      (episode) =>
+        String(episode?.id) === String(episodeId) ||
+        String(episode?.episode_number) === String(episodeId),
+    ) ?? episodes[0]
   )
 }
 
-function getSectionVariant(movie) {
-  return getPreviewType(movie) === 'continue' ? 'landscape' : 'poster'
+function getEpisodeCountText(movie) {
+  const type = getMovieType(movie)
+  const episodes = getEpisodes(movie)
+  const oldEpisodeCount = getText(movie?.episodeCount)
+
+  if (oldEpisodeCount) {
+    return oldEpisodeCount
+  }
+
+  if (type === 'series') {
+    return `${episodes.length || 1} Episode`
+  }
+
+  return 'Movie'
 }
 
-export function mapApiMovieToPublicMovie(movie) {
-  const previewType = getPreviewType(movie)
-  const image = movie.image || movie.previewImage || ''
-  const previewImage = movie.previewImage || image
+function getSeriesEpisodeCountText(movie) {
+  const oldEpisodeCount = getText(movie?.episodeCount)
+
+  if (oldEpisodeCount && getNormalizedText(oldEpisodeCount) !== 'movie') {
+    return oldEpisodeCount
+  }
+
+  return `${getEpisodes(movie).length || 1} episode`
+}
+
+function getDurationText(movie, episode) {
+  return (
+    getText(episode?.duration) ||
+    getText(movie?.duration) ||
+    (getMovieType(movie) === 'movie' ? undefined : '')
+  )
+}
+
+function getPreviewType(movie, watchProgress) {
+  const oldPreviewType = getNormalizedText(movie?.previewType)
+
+  if (watchProgress || oldPreviewType === 'continue') {
+    return 'continue'
+  }
+
+  if (oldPreviewType === 'series' || getMovieType(movie) === 'series') {
+    return 'series'
+  }
+
+  return 'movie'
+}
+
+function getProgressValue(movie, watchProgress) {
+  return getNumber(
+    watchProgress?.progress_percent ?? movie?.progress,
+    watchProgress ? 0 : 35,
+  )
+}
+
+function getPreviewImage(movie, episode) {
+  return (
+    getText(movie?.preview_image) ||
+    getText(movie?.previewImage) ||
+    getText(episode?.thumbnail_url) ||
+    getText(movie?.image)
+  )
+}
+
+function getCardImage(movie, episode, isContinue) {
+  if (isContinue) {
+    return getText(episode?.thumbnail_url) || getPreviewImage(movie, episode)
+  }
+
+  return getText(movie?.image) || getPreviewImage(movie, episode)
+}
+
+function getContentType(movie) {
+  const type = getMovieType(movie)
+
+  return type === 'series' ? 'series' : 'movie'
+}
+
+export function mapApiMovieToSeriesDetail(movie) {
+  const episodes = getEpisodes(movie)
+    .map((episode, index) => ({
+      description:
+        getText(episode?.description) ||
+        getText(movie?.description) ||
+        'Episode tersedia untuk ditonton.',
+      duration: getText(episode?.duration),
+      id: episode?.id || `${movie?.id || movie?.slug}-episode-${index + 1}`,
+      number: getNumber(episode?.episode_number, index + 1),
+      thumbnailUrl: getText(episode?.thumbnail_url) || getPreviewImage(movie),
+      title: getText(episode?.title, `Episode ${index + 1}`),
+    }))
+    .filter((episode) => episode.title)
+  const castNames = getPeopleNames(movie, ['cast'])
+  const creatorNames = getPeopleNames(movie, ['creator', 'director'])
+  const releaseYear = getNumber(getField(movie, 'release_year', 'releaseYear'))
 
   return {
-    id: movie.id || movie.slug || movie.title,
-    title: movie.title || 'Untitled',
+    ageRating: getField(movie, 'age_rating', 'ageRating', '13+'),
+    cast: castNames.join(', '),
+    creators: creatorNames.join(', '),
+    description: movie?.description || '',
+    episodeCount: getSeriesEpisodeCountText(movie),
+    episodes,
+    genres: getGenres(movie?.genres),
+    id: movie?.id || movie?.slug || movie?.title,
+    image: getPreviewImage(movie) || getText(movie?.image),
+    releaseYear: releaseYear ? String(releaseYear) : '',
+    title: movie?.title || 'Untitled',
+  }
+}
+
+export function isActiveMovie(movie) {
+  return getField(movie, 'is_active', 'isActive', true) !== false
+}
+
+export function isTopTenMovie(movie) {
+  return getBoolean(getField(movie, 'is_top_ten', 'top', false))
+}
+
+export function isTrendingMovie(movie) {
+  return getBoolean(getField(movie, 'is_trending', 'isTrending', false))
+}
+
+export function isPremiumMovie(movie) {
+  return (
+    getBoolean(getField(movie, 'is_premium', 'isPremium', false)) ||
+    getNormalizedText(movie?.badge) === 'premium'
+  )
+}
+
+export function sortByRatingDesc(firstMovie, secondMovie) {
+  return getNumber(secondMovie?.rating) - getNumber(firstMovie?.rating)
+}
+
+export function sortByPublishedDesc(firstMovie, secondMovie) {
+  const firstTimestamp = getTimestamp(
+    getField(firstMovie, 'published_at', 'publishedAt'),
+  )
+  const secondTimestamp = getTimestamp(
+    getField(secondMovie, 'published_at', 'publishedAt'),
+  )
+
+  if (firstTimestamp !== secondTimestamp) {
+    return secondTimestamp - firstTimestamp
+  }
+
+  const releaseYearDiff =
+    getNumber(getField(secondMovie, 'release_year', 'releaseYear')) -
+    getNumber(getField(firstMovie, 'release_year', 'releaseYear'))
+
+  if (releaseYearDiff !== 0) {
+    return releaseYearDiff
+  }
+
+  return getNumber(secondMovie?.id) - getNumber(firstMovie?.id)
+}
+
+function getProgressMovieId(watchProgress) {
+  return (
+    watchProgress?.movieId ??
+    watchProgress?.series_film_id ??
+    watchProgress?.seriesFilmId ??
+    watchProgress?.movie_id
+  )
+}
+
+export function getMoviesWithProgress(movies, watchProgressItems = []) {
+  const activeMovies = movies.filter(isActiveMovie)
+
+  return watchProgressItems
+    .map((watchProgress) => {
+      const movieId = getProgressMovieId(watchProgress)
+      const movie = activeMovies.find(
+        (activeMovie) => String(activeMovie.id) === String(movieId),
+      )
+
+      if (!movie) {
+        return null
+      }
+
+      return {
+        movie,
+        watchProgress,
+      }
+    })
+    .filter(Boolean)
+    .sort(
+      (firstItem, secondItem) =>
+        getTimestamp(secondItem.watchProgress?.last_watched_at) -
+        getTimestamp(firstItem.watchProgress?.last_watched_at),
+    )
+}
+
+export function mapApiMovieToPublicMovie(movie, options = {}) {
+  const watchProgress = options.watchProgress ?? movie?.watchProgress
+  const episode = findEpisode(movie, watchProgress?.episode_movie_id)
+  const previewType = getPreviewType(movie, watchProgress)
+  const isContinue = previewType === 'continue'
+  const contentType = getContentType(movie)
+  const image = getCardImage(movie, episode, isContinue)
+  const previewImage = getPreviewImage(movie, episode) || image
+  const duration = getDurationText(movie, episode)
+  const badge = movie?.badge || (isPremiumMovie(movie) ? 'Premium' : '')
+  const episodeTitle = isContinue
+    ? getText(episode?.title) || getText(movie?.episodeTitle)
+    : undefined
+
+  return {
+    detail:
+      contentType === 'series' ? mapApiMovieToSeriesDetail(movie) : undefined,
+    id: movie?.id || movie?.slug || movie?.title,
+    title: movie?.title || 'Untitled',
     image,
-    rating: movie.rating || '0',
-    badge: movie.badge || '',
-    top: getBoolean(movie.top),
-    description: movie.description || '',
+    rating: String(movie?.rating ?? '0'),
+    badge,
+    top: isTopTenMovie(movie),
+    description: movie?.description || '',
     hoverPreview: {
       previewImage,
-      ageRating: movie.ageRating || '13+',
-      episodeCount: movie.episodeCount || (previewType === 'movie' ? 'Movie' : '16 Episode'),
-      duration: movie.duration || undefined,
-      episodeTitle: movie.episodeTitle || undefined,
-      genres: getGenres(movie.genres),
-      progress: getNumber(movie.progress, 35),
+      ageRating: getField(movie, 'age_rating', 'ageRating', '13+'),
+      contentType,
+      episodeCount: getEpisodeCountText(movie),
+      duration,
+      episodeTitle,
+      genres: getGenres(movie?.genres),
+      progress: getProgressValue(movie, watchProgress),
       type: previewType,
     },
   }
 }
 
-export function groupMoviesBySection(movies) {
-  const sectionMap = new Map()
+function mapSectionItem(item) {
+  if (item?.movie) {
+    return mapApiMovieToPublicMovie(item.movie, {
+      watchProgress: item.watchProgress,
+    })
+  }
 
-  movies.forEach((movie, index) => {
-    const sectionKey = getMovieSectionKey(movie)
+  return mapApiMovieToPublicMovie(item)
+}
 
-    if (!sectionKey) {
-      return
-    }
+export function buildMovieSections(sectionConfigs, context) {
+  return sectionConfigs
+    .map((sectionConfig) => {
+      const items = sectionConfig.getItems(context)
+      const limitedItems = sectionConfig.limit
+        ? items.slice(0, sectionConfig.limit)
+        : items
 
-    if (!sectionMap.has(sectionKey)) {
-      sectionMap.set(sectionKey, {
-        key: sectionKey,
-        movies: [],
-        order: getNumber(movie.sectionOrder, fallbackSectionOrders[sectionKey] ?? index),
-        title: getMovieSectionTitle(movie),
-        variant: getSectionVariant(movie),
-      })
-    }
-
-    const section = sectionMap.get(sectionKey)
-    const sectionTitle = getMovieSectionTitle(movie)
-
-    if (sectionTitle && section.title === sectionKey) {
-      section.title = sectionTitle
-    }
-
-    if (getSectionVariant(movie) === 'landscape') {
-      section.variant = 'landscape'
-    }
-
-    section.movies.push(mapApiMovieToPublicMovie(movie))
-  })
-
-  return [...sectionMap.values()]
+      return {
+        key: sectionConfig.key,
+        movies: limitedItems.map(mapSectionItem),
+        title: sectionConfig.title,
+        variant: sectionConfig.variant ?? 'poster',
+      }
+    })
     .filter((section) => section.movies.length > 0)
-    .sort((firstSection, secondSection) => firstSection.order - secondSection.order)
-    .map((section) => ({
-      key: section.key,
-      movies: section.movies,
-      title: section.title,
-      variant: section.variant,
-    }))
+}
+
+export function groupMoviesBySection(movies) {
+  return buildMovieSections(
+    [
+      {
+        getItems: ({ items }) => items,
+        key: 'all',
+        title: 'Movie',
+      },
+    ],
+    { items: movies },
+  )
 }

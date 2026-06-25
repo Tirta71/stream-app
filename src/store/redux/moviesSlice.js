@@ -3,11 +3,13 @@ import {
   createMovie as createMovieRequest,
   deleteMovie as deleteMovieRequest,
   getMovies,
+  getWatchProgress,
   updateMovie as updateMovieRequest,
 } from "../../services/movieApi.js";
 
 const initialState = {
   items: [],
+  watchProgress: [],
   status: "idle",
   error: null,
 };
@@ -29,8 +31,13 @@ export const fetchMovies = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const movies = await getMovies();
+      const movieItems = Array.isArray(movies) ? movies : [];
+      const watchProgress = await getWatchProgress(movieItems).catch(() => []);
 
-      return Array.isArray(movies) ? movies : [];
+      return {
+        items: movieItems,
+        watchProgress: Array.isArray(watchProgress) ? watchProgress : [],
+      };
     } catch (error) {
       return rejectWithValue(
         getRejectedMessage(error, "Gagal mengambil data movie"),
@@ -88,12 +95,14 @@ const moviesSlice = createSlice({
       })
       .addCase(fetchMovies.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = action.payload.items;
+        state.watchProgress = action.payload.watchProgress;
       })
       .addCase(fetchMovies.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload || action.error.message;
         state.items = [];
+        state.watchProgress = [];
       })
       .addCase(addMovie.pending, (state) => {
         state.error = null;
@@ -134,5 +143,6 @@ const moviesSlice = createSlice({
 export const selectMovies = (state) => state.movies.items;
 export const selectMoviesError = (state) => state.movies.error;
 export const selectMoviesStatus = (state) => state.movies.status;
+export const selectWatchProgress = (state) => state.movies.watchProgress;
 
 export default moviesSlice.reducer;
