@@ -1,12 +1,37 @@
-# stream-app
+# CHILL App
 
-React + Vite movie streaming UI built from the Chill design.
+Monorepo untuk aplikasi CHILL.
 
-## Scripts
+## Struktur
+
+```txt
+stream-app/
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── package.json
+├── backend/
+│   ├── prisma/
+│   ├── src/
+│   └── package.json
+├── README.md
+└── .gitignore
+```
+
+## Frontend
 
 ```bash
+cd frontend
 npm install
 npm run dev
-npm run build
-npm run lint
 ```
+
+## Backend
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Salin `.env.example` menjadi `.env` di masing-masing folder, lalu sesuaikan nilainya.
