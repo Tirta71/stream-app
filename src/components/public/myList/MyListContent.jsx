@@ -1,11 +1,24 @@
 import Footer from "../layout/Footer.jsx";
 import Navbar from "../layout/Navbar.jsx";
+import MovieDetailModal from "../movie/MovieDetailModal.jsx";
+import SeriesDetailModal from "../series/SeriesDetailModal.jsx";
 import PageMessage from "../ui/PageMessage.jsx";
 import PageTitle from "../ui/PageTitle.jsx";
 import PageTransition from "../ui/PageTransition.jsx";
 import MyListGrid from "./MyListGrid.jsx";
 
-function MyListContent({ error, isLoading, movies, status }) {
+function MyListContent({
+  error,
+  isLoading,
+  movies,
+  onCloseMovieDetail,
+  onCloseSeriesDetail,
+  onShowMovieDetail,
+  onShowSeriesDetail,
+  selectedMovieDetail,
+  selectedSeriesDetail,
+  status,
+}) {
   return (
     <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
       <Navbar />
@@ -23,9 +36,21 @@ function MyListContent({ error, isLoading, movies, status }) {
         {isLoading && !movies.length ? (
           <PageMessage message="Memuat daftar..." />
         ) : (
-          <MyListGrid movies={movies} />
+          <MyListGrid
+            movies={movies}
+            onShowMovieDetail={onShowMovieDetail}
+            onShowSeriesDetail={onShowSeriesDetail}
+          />
         )}
       </PageTransition>
+      <MovieDetailModal
+        detail={selectedMovieDetail}
+        onClose={onCloseMovieDetail}
+      />
+      <SeriesDetailModal
+        detail={selectedSeriesDetail}
+        onClose={onCloseSeriesDetail}
+      />
       <Footer />
     </div>
   );

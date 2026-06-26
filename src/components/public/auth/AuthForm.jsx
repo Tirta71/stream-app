@@ -61,7 +61,14 @@ function AuthForm({
   footerText,
   footerLink,
   forgotPassword,
+  error,
   googleButtonText,
+  isGoogleSubmitting = false,
+  isSubmitting = false,
+  onChange,
+  onGoogleLogin,
+  onSubmit,
+  values = {},
   compact = false,
 }) {
   const inputSize = compact ? "compact" : "default";
@@ -73,10 +80,23 @@ function AuthForm({
     googleButtonText ?? `${buttonText} dengan Google`;
 
   return (
-    <form className={formClassName}>
+    <form className={formClassName} onSubmit={onSubmit}>
       {fields.map((field) => (
-        <FormInput key={field.name} {...field} size={field.size ?? inputSize} />
+        <FormInput
+          key={field.name}
+          {...field}
+          onChange={onChange}
+          required={field.required ?? true}
+          size={field.size ?? inputSize}
+          value={values[field.name] ?? ""}
+        />
       ))}
+
+      {error ? (
+        <div className="rounded-xl border border-[#ff7775]/30 bg-[#b71f1d]/20 px-4 py-3 text-sm font-semibold text-[#ffb1af] max-[640px]:text-xs">
+          {error}
+        </div>
+      ) : null}
 
       <AuthMeta
         footerText={footerText}
@@ -84,22 +104,28 @@ function AuthForm({
         forgotPassword={forgotPassword}
       />
 
-      <Button type="button" size={buttonSize}>
-        {buttonText}
+      <Button type="submit" size={buttonSize} disabled={isSubmitting}>
+        {isSubmitting ? `${buttonText}...` : buttonText}
       </Button>
 
       <div className="-my-0.5 text-center text-base text-[rgba(193,194,196,0.88)] max-[640px]:text-sm">
         atau
       </div>
 
-      <Button type="button" variant="outline" size={buttonSize}>
+      <Button
+        type="button"
+        variant="outline"
+        size={buttonSize}
+        disabled={isGoogleSubmitting}
+        onClick={onGoogleLogin}
+      >
         <img
           className="h-6 w-6 object-contain"
           src={googleIconUrl}
           alt=""
           aria-hidden="true"
         />
-        {resolvedGoogleButtonText}
+        {isGoogleSubmitting ? "Memproses..." : resolvedGoogleButtonText}
       </Button>
 
       <AuthFooterLink

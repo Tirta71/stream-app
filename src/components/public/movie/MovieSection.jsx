@@ -5,6 +5,7 @@ import MovieCard from './MovieCard.jsx'
 function MovieSection({
   title,
   movies,
+  onShowMovieDetail,
   onShowSeriesDetail,
   variant = 'poster',
 }) {
@@ -172,6 +173,7 @@ function MovieSection({
               key={movie.id}
               {...movie}
               motionProps={staggerCardProps}
+              onShowMovieDetail={onShowMovieDetail}
               onShowSeriesDetail={onShowSeriesDetail}
               variant={variant}
             />

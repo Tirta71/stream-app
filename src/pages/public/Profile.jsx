@@ -1,34 +1,40 @@
-import MyListContent from "../../components/public/myList/MyListContent.jsx";
-import useMyListMovies from "../../hooks/public/useMyListMovies.js";
+import ProfileContent from "../../components/public/profile/ProfileContent.jsx";
+import useProfilePage from "../../hooks/public/useProfilePage.js";
 
-function MyList() {
+function Profile() {
   const {
     closeMovieDetail,
     closeSeriesDetail,
     isLoading,
+    isSubscribed,
     moviesError,
     moviesStatus,
     myListMovies,
+    profile,
     selectedMovieDetail,
     selectedSeriesDetail,
     showMovieDetail,
     showSeriesDetail,
-  } = useMyListMovies();
+    subscription,
+  } = useProfilePage();
 
   return (
-    <MyListContent
+    <ProfileContent
       error={moviesError}
       isLoading={isLoading}
+      isSubscribed={isSubscribed}
       movies={myListMovies}
       onCloseMovieDetail={closeMovieDetail}
       onCloseSeriesDetail={closeSeriesDetail}
       onShowMovieDetail={showMovieDetail}
       onShowSeriesDetail={showSeriesDetail}
+      profile={profile}
       selectedMovieDetail={selectedMovieDetail}
       selectedSeriesDetail={selectedSeriesDetail}
       status={moviesStatus}
+      subscription={subscription}
     />
   );
 }
 
-export default MyList;
+export default Profile;

@@ -1,15 +1,19 @@
 import Footer from "../layout/Footer.jsx";
 import HeroSection from "../layout/HeroSection.jsx";
 import Navbar from "../layout/Navbar.jsx";
+import MovieDetailModal from "../movie/MovieDetailModal.jsx";
 import MovieSection from "../movie/MovieSection.jsx";
 import SeriesDetailModal from "../series/SeriesDetailModal.jsx";
 import PageTransition from "../ui/PageTransition.jsx";
 
 function HomeContent({
   heroMovie,
+  onCloseMovieDetail,
   onCloseSeriesDetail,
+  onShowMovieDetail,
   onShowSeriesDetail,
   sections,
+  selectedMovieDetail,
   selectedSeriesDetail,
 }) {
   return (
@@ -21,12 +25,17 @@ function HomeContent({
           <MovieSection
             key={section.key}
             movies={section.movies}
+            onShowMovieDetail={onShowMovieDetail}
             onShowSeriesDetail={onShowSeriesDetail}
             title={section.title}
             variant={section.variant}
           />
         ))}
       </PageTransition>
+      <MovieDetailModal
+        detail={selectedMovieDetail}
+        onClose={onCloseMovieDetail}
+      />
       <SeriesDetailModal
         detail={selectedSeriesDetail}
         onClose={onCloseSeriesDetail}

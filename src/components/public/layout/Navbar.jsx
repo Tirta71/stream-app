@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import logo from "../../../assets/img/logo/Logo.png";
 import logoMobile from "../../../assets/img/logo/logo_mobile.png";
+import { useAuthSession } from "../../../hooks/public/useAuthSession.js";
 import GenreDropdown from "../ui/GenreDropdown.jsx";
 
 const profileAvatarUrl =
@@ -20,6 +21,7 @@ function Navbar({
   showGenreMenu = false,
 }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { logout } = useAuthSession();
   const navbarRef = useRef(null);
 
   useEffect(() => {
@@ -50,6 +52,11 @@ function Navbar({
 
   const closeProfile = () => {
     setIsProfileOpen(false);
+  };
+
+  const handleLogout = () => {
+    closeProfile();
+    logout();
   };
 
   return (
@@ -150,7 +157,7 @@ function Navbar({
       >
         <Link
           className="flex min-h-10 items-center gap-[5px] px-3 py-2 text-sm text-[#3254ff] transition-colors duration-150 hover:bg-white/[0.03] max-[760px]:min-h-8 max-[760px]:gap-1.5 max-[760px]:px-2.5 max-[760px]:text-[10px]"
-          to="/"
+          to="/profil"
           onClick={closeProfile}
         >
           <span aria-hidden="true">
@@ -166,7 +173,7 @@ function Navbar({
         </Link>
         <Link
           className="flex min-h-10 items-center gap-[5px] px-3 py-2 text-sm text-[rgba(255,255,255,0.96)] transition-colors duration-150 hover:bg-white/[0.03] max-[760px]:min-h-8 max-[760px]:gap-1.5 max-[760px]:px-2.5 max-[760px]:text-[10px]"
-          to="/"
+          to="/langganan"
           onClick={closeProfile}
         >
           <span aria-hidden="true">
@@ -182,7 +189,7 @@ function Navbar({
         <Link
           className="flex min-h-10 items-center gap-[5px] px-3 py-2 text-sm text-[rgba(255,255,255,0.96)] transition-colors duration-150 hover:bg-white/[0.03] max-[760px]:min-h-8 max-[760px]:gap-1.5 max-[760px]:px-2.5 max-[760px]:text-[10px]"
           to="/login"
-          onClick={closeProfile}
+          onClick={handleLogout}
         >
           <span aria-hidden="true">
             <svg

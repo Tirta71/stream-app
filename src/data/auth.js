@@ -6,11 +6,11 @@ export const loginAuth = {
   form: {
     fields: [
       {
-        label: 'Username',
-        type: 'text',
-        name: 'username',
-        placeholder: 'Masukkan username',
-        autoComplete: 'username',
+        label: 'Email',
+        type: 'email',
+        name: 'email',
+        placeholder: 'Masukkan email',
+        autoComplete: 'email',
       },
       {
         label: 'Kata Sandi',
@@ -41,11 +41,18 @@ export const registerAuth = {
   form: {
     fields: [
       {
-        label: 'Username',
+        label: 'Nama',
         type: 'text',
-        name: 'username',
-        placeholder: 'Masukkan username',
-        autoComplete: 'username',
+        name: 'name',
+        placeholder: 'Masukkan nama',
+        autoComplete: 'name',
+      },
+      {
+        label: 'Email',
+        type: 'email',
+        name: 'email',
+        placeholder: 'Masukkan email',
+        autoComplete: 'email',
       },
       {
         label: 'Kata Sandi',

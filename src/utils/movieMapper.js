@@ -58,7 +58,7 @@ export function getGenres(genres) {
           return genre.trim()
         }
 
-        return genre?.name || genre?.title || ''
+        return genre?.name || genre?.title || genre?.genre?.name || ''
       })
       .filter(Boolean)
   }
@@ -86,12 +86,18 @@ function getEpisodes(movie) {
 }
 
 function getPeople(movie) {
+  const normalizePerson = (person) => ({
+    ...person,
+    name: person?.name || person?.person?.name || '',
+    role: person?.role || person?.personRole || '',
+  })
+
   if (Array.isArray(movie?.people)) {
-    return movie.people
+    return movie.people.map(normalizePerson)
   }
 
   if (movie?.people && typeof movie.people === 'object') {
-    return Object.values(movie.people)
+    return Object.values(movie.people).map(normalizePerson)
   }
 
   return []
@@ -117,7 +123,8 @@ function findEpisode(movie, episodeId) {
     episodes.find(
       (episode) =>
         String(episode?.id) === String(episodeId) ||
-        String(episode?.episode_number) === String(episodeId),
+        String(episode?.episode_number) === String(episodeId) ||
+        String(episode?.episodeNumber) === String(episodeId),
     ) ?? episodes[0]
   )
 }
@@ -172,7 +179,7 @@ function getPreviewType(movie, watchProgress) {
 
 function getProgressValue(movie, watchProgress) {
   return getNumber(
-    watchProgress?.progress_percent ?? movie?.progress,
+    watchProgress?.progress_percent ?? watchProgress?.progressPercent ?? movie?.progress,
     watchProgress ? 0 : 35,
   )
 }
@@ -182,13 +189,18 @@ function getPreviewImage(movie, episode) {
     getText(movie?.preview_image) ||
     getText(movie?.previewImage) ||
     getText(episode?.thumbnail_url) ||
+    getText(episode?.thumbnailUrl) ||
     getText(movie?.image)
   )
 }
 
 function getCardImage(movie, episode, isContinue) {
   if (isContinue) {
-    return getText(episode?.thumbnail_url) || getPreviewImage(movie, episode)
+    return (
+      getText(episode?.thumbnail_url) ||
+      getText(episode?.thumbnailUrl) ||
+      getPreviewImage(movie, episode)
+    )
   }
 
   return getText(movie?.image) || getPreviewImage(movie, episode)
@@ -209,8 +221,14 @@ export function mapApiMovieToSeriesDetail(movie) {
         'Episode tersedia untuk ditonton.',
       duration: getText(episode?.duration),
       id: episode?.id || `${movie?.id || movie?.slug}-episode-${index + 1}`,
-      number: getNumber(episode?.episode_number, index + 1),
-      thumbnailUrl: getText(episode?.thumbnail_url) || getPreviewImage(movie),
+      number: getNumber(
+        episode?.episode_number ?? episode?.episodeNumber,
+        index + 1,
+      ),
+      thumbnailUrl:
+        getText(episode?.thumbnail_url) ||
+        getText(episode?.thumbnailUrl) ||
+        getPreviewImage(movie),
       title: getText(episode?.title, `Episode ${index + 1}`),
     }))
     .filter((episode) => episode.title)
@@ -233,12 +251,34 @@ export function mapApiMovieToSeriesDetail(movie) {
   }
 }
 
+export function mapApiMovieToMovieDetail(movie) {
+  const episode = findEpisode(movie)
+  const castNames = getPeopleNames(movie, ['cast'])
+  const creatorNames = getPeopleNames(movie, ['director', 'creator'])
+  const releaseYear = getNumber(getField(movie, 'release_year', 'releaseYear'))
+
+  return {
+    ageRating: getField(movie, 'age_rating', 'ageRating', '13+'),
+    cast: castNames.join(', '),
+    creators: creatorNames.join(', '),
+    description: movie?.description || '',
+    duration: getDurationText(movie, episode),
+    genres: getGenres(movie?.genres),
+    id: movie?.id || movie?.slug || movie?.title,
+    image: getPreviewImage(movie, episode) || getText(movie?.image),
+    releaseYear: releaseYear ? String(releaseYear) : '',
+    title: movie?.title || 'Untitled',
+  }
+}
+
 export function isActiveMovie(movie) {
   return getField(movie, 'is_active', 'isActive', true) !== false
 }
 
 export function isTopTenMovie(movie) {
-  return getBoolean(getField(movie, 'is_top_ten', 'top', false))
+  return getBoolean(
+    movie?.isTopTen ?? getField(movie, 'is_top_ten', 'top', false),
+  )
 }
 
 export function isTrendingMovie(movie) {
@@ -315,9 +355,53 @@ export function getMoviesWithProgress(movies, watchProgressItems = []) {
     )
 }
 
+export function mapApiMovieToRecommendation(movie) {
+  return {
+    badge: movie?.badge || (isPremiumMovie(movie) ? 'Premium' : ''),
+    id: movie?.id || movie?.slug || movie?.title,
+    image: getText(movie?.image) || getPreviewImage(movie),
+    title: movie?.title || 'Untitled',
+    top: isTopTenMovie(movie),
+  }
+}
+
+export function getSimilarMovieRecommendations(detail, movies, limit = 3) {
+  const detailGenres = new Set((detail?.genres ?? []).map(getNormalizedText))
+
+  return movies
+    .filter(
+      (movie) =>
+        isActiveMovie(movie) &&
+        getMovieType(movie) === 'movie' &&
+        String(movie?.id) !== String(detail?.id),
+    )
+    .map((movie) => {
+      const genreScore = getGenres(movie?.genres).filter((genre) =>
+        detailGenres.has(getNormalizedText(genre)),
+      ).length
+
+      return {
+        genreScore,
+        movie,
+      }
+    })
+    .sort((firstItem, secondItem) => {
+      if (firstItem.genreScore !== secondItem.genreScore) {
+        return secondItem.genreScore - firstItem.genreScore
+      }
+
+      return sortByRatingDesc(firstItem.movie, secondItem.movie)
+    })
+    .slice(0, limit)
+    .map((item) => mapApiMovieToRecommendation(item.movie))
+}
+
 export function mapApiMovieToPublicMovie(movie, options = {}) {
   const watchProgress = options.watchProgress ?? movie?.watchProgress
-  const episode = findEpisode(movie, watchProgress?.episode_movie_id)
+  const episode = findEpisode(
+    movie,
+    watchProgress?.episode_movie_id ?? watchProgress?.episodeMovieId,
+  )
   const previewType = getPreviewType(movie, watchProgress)
   const isContinue = previewType === 'continue'
   const contentType = getContentType(movie)
@@ -331,7 +415,9 @@ export function mapApiMovieToPublicMovie(movie, options = {}) {
 
   return {
     detail:
-      contentType === 'series' ? mapApiMovieToSeriesDetail(movie) : undefined,
+      contentType === 'series'
+        ? mapApiMovieToSeriesDetail(movie)
+        : mapApiMovieToMovieDetail(movie),
     id: movie?.id || movie?.slug || movie?.title,
     title: movie?.title || 'Untitled',
     image,

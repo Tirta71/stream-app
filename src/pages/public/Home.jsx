@@ -3,8 +3,11 @@ import useHomeMovies from "../../hooks/public/useHomeMovies.js";
 
 function Home({ heroMovie }) {
   const {
+    closeMovieDetail,
     closeSeriesDetail,
+    selectedMovieDetail,
     selectedSeriesDetail,
+    showMovieDetail,
     showSeriesDetail,
     visibleSections,
   } = useHomeMovies();
@@ -12,9 +15,12 @@ function Home({ heroMovie }) {
   return (
     <HomeContent
       heroMovie={heroMovie}
+      onCloseMovieDetail={closeMovieDetail}
       onCloseSeriesDetail={closeSeriesDetail}
+      onShowMovieDetail={showMovieDetail}
       onShowSeriesDetail={showSeriesDetail}
       sections={visibleSections}
+      selectedMovieDetail={selectedMovieDetail}
       selectedSeriesDetail={selectedSeriesDetail}
     />
   );

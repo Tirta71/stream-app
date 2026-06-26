@@ -20,6 +20,7 @@ function MovieCard({
   hoverPreview,
   hoverPlacement = "center",
   motionProps = {},
+  onShowMovieDetail,
   onShowSeriesDetail,
   size = "default",
 }) {
@@ -78,6 +79,30 @@ function MovieCard({
   const handleShowDetail = () => {
     if (hoverPreview?.contentType === "series" && detail) {
       onShowSeriesDetail?.(detail);
+      return;
+    }
+
+    if (hoverPreview?.contentType === "movie" && detail) {
+      onShowMovieDetail?.(detail);
+    }
+  };
+  const handleCardClick = (event) => {
+    if (event.target.closest("button")) {
+      return;
+    }
+
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      handleShowDetail();
+    }
+  };
+  const handleCardKeyDown = (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      event.preventDefault();
+      handleShowDetail();
     }
   };
 
@@ -87,7 +112,9 @@ function MovieCard({
       className={cardClassName}
       aria-label={title}
       data-movie-card
+      onClick={handleCardClick}
       onFocus={updateHoverPlacement}
+      onKeyDown={handleCardKeyDown}
       onPointerEnter={updateHoverPlacement}
       tabIndex={hasHoverPreview ? 0 : undefined}
       {...motionProps}

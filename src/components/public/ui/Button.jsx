@@ -24,6 +24,7 @@ function Button({
     'inline-flex items-center justify-center gap-3 rounded-full text-[rgba(255,255,255,0.96)] transition-[transform,background,border-color] duration-[160ms]',
     variantClasses[variant] ?? variantClasses.primary,
     sizeClasses[size] ?? '',
+    props.disabled ? 'cursor-not-allowed opacity-60 hover:translate-y-0' : '',
     className,
   ]
     .filter(Boolean)

@@ -8,6 +8,7 @@ import {
 } from "../../store/redux/moviesSlice.js";
 import {
   buildMovieSections,
+  getSimilarMovieRecommendations,
   getGenres,
   getMovieType,
   getMoviesWithProgress,
@@ -15,6 +16,7 @@ import {
   isActiveMovie,
   isPremiumMovie,
   isTrendingMovie,
+  mapApiMovieToMovieDetail,
   sortByPublishedDesc,
   sortByRatingDesc,
 } from "../../utils/movieMapper.js";
@@ -71,12 +73,14 @@ function mapHeroMovie(movie) {
   if (!movie) {
     return {
       ...movieHeroFallback,
+      detail: null,
       fallbackImage: movieHeroFallback.image,
     };
   }
 
   return {
     description: movie.description || movieHeroFallback.description,
+    detail: mapApiMovieToMovieDetail(movie),
     fallbackImage: movieHeroFallback.image,
     image: getHeroImage(movie) || movieHeroFallback.image,
     title: movie.title || movieHeroFallback.title,
@@ -103,6 +107,7 @@ function useMovieMovies() {
   const moviesStatus = useSelector(selectMoviesStatus);
   const watchProgress = useSelector(selectWatchProgress);
   const [selectedGenre, setSelectedGenre] = useState("");
+  const [selectedMovieDetail, setSelectedMovieDetail] = useState(null);
 
   useEffect(() => {
     if (moviesStatus === "idle") {
@@ -156,13 +161,34 @@ function useMovieMovies() {
     });
   }, [filteredMovieItems, watchProgress]);
 
+  const showMovieDetail = (detail) => {
+    if (detail) {
+      setSelectedMovieDetail({
+        ...detail,
+        recommendations: getSimilarMovieRecommendations(detail, movieItems),
+      });
+    }
+  };
+
+  const showHeroDetail = () => {
+    showMovieDetail(heroMovie.detail);
+  };
+
+  const closeMovieDetail = () => {
+    setSelectedMovieDetail(null);
+  };
+
   return {
+    closeMovieDetail,
     genreOptions,
     heroMovie,
     moviesStatus,
     sections,
     selectedGenre,
+    selectedMovieDetail,
     setSelectedGenre,
+    showHeroDetail,
+    showMovieDetail,
   };
 }
 

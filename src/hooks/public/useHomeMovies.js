@@ -8,6 +8,7 @@ import {
 } from "../../store/redux/moviesSlice.js";
 import {
   buildMovieSections,
+  getSimilarMovieRecommendations,
   getMovieType,
   getMoviesWithProgress,
   isActiveMovie,
@@ -51,6 +52,7 @@ function useHomeMovies() {
   const movies = useSelector(selectMovies);
   const moviesStatus = useSelector(selectMoviesStatus);
   const watchProgress = useSelector(selectWatchProgress);
+  const [selectedMovieDetail, setSelectedMovieDetail] = useState(null);
   const [selectedSeriesDetail, setSelectedSeriesDetail] = useState(null);
 
   useEffect(() => {
@@ -59,20 +61,34 @@ function useHomeMovies() {
     }
   }, [dispatch, moviesStatus]);
 
+  const activeMovies = useMemo(
+    () => movies.filter(isActiveMovie),
+    [movies],
+  );
+
   const visibleSections = useMemo(() => {
-    const activeMovies = movies.filter(isActiveMovie);
     const continueMovies = getMoviesWithProgress(activeMovies, watchProgress);
 
     return buildMovieSections(homeSectionConfigs, {
       activeMovies,
       continueMovies,
     });
-  }, [movies, watchProgress]);
+  }, [activeMovies, watchProgress]);
 
   return {
+    closeMovieDetail: () => setSelectedMovieDetail(null),
     closeSeriesDetail: () => setSelectedSeriesDetail(null),
     moviesStatus,
+    selectedMovieDetail,
     selectedSeriesDetail,
+    showMovieDetail: (detail) => {
+      if (detail) {
+        setSelectedMovieDetail({
+          ...detail,
+          recommendations: getSimilarMovieRecommendations(detail, activeMovies),
+        });
+      }
+    },
     showSeriesDetail: (detail) => {
       if (detail) {
         setSelectedSeriesDetail(detail);

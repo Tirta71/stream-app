@@ -3,7 +3,7 @@ import PageMessage from "../ui/PageMessage.jsx";
 
 const desktopColumnCount = 6;
 
-function MyListGrid({ movies }) {
+function MyListGrid({ movies, onShowMovieDetail, onShowSeriesDetail }) {
   if (!movies.length) {
     return <PageMessage message="Daftar kamu masih kosong." variant="empty" />;
   }
@@ -24,6 +24,8 @@ function MyListGrid({ movies }) {
             key={movie.id}
             {...movie}
             hoverPlacement={hoverPlacement}
+            onShowMovieDetail={onShowMovieDetail}
+            onShowSeriesDetail={onShowSeriesDetail}
             size="compact"
             variant="poster"
           />

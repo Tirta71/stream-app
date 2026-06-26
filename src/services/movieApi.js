@@ -1,23 +1,35 @@
 import axios from 'axios'
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api/v1'
 const moviesApiUrl = import.meta.env.VITE_MOVIES_API_URL
 const watchProgressApiUrl = import.meta.env.VITE_WATCH_PROGRESS_API_URL
-const watchProgressResource = 'watch_progress'
 
 function getMoviesApiUrl() {
-  if (!moviesApiUrl) {
-    throw new Error('VITE_MOVIES_API_URL belum diset di .env')
-  }
+  const baseUrl = moviesApiUrl || `${apiBaseUrl.replace(/\/$/, '')}/movies`
 
-  return moviesApiUrl.replace(/\/$/, '')
+  return baseUrl.replace(/\/$/, '')
 }
 
-function getWatchProgressApiUrl(movieId) {
+function getWatchProgressApiUrl() {
   if (watchProgressApiUrl) {
-    return watchProgressApiUrl.replace('{movieId}', movieId).replace(/\/$/, '')
+    return watchProgressApiUrl.replace(/\/$/, '')
   }
 
-  return `${getMoviesApiUrl()}/${movieId}/${watchProgressResource}`
+  return `${apiBaseUrl.replace(/\/$/, '')}/watch-progress`
+}
+
+function getResponseData(responseData) {
+  return responseData?.data ?? responseData
+}
+
+function getErrorMessage(error) {
+  const errorData = error.response?.data
+
+  if (typeof errorData === 'string') {
+    return errorData
+  }
+
+  return errorData?.message || `Request data gagal (${error.response?.status ?? 'network'})`
 }
 
 async function requestData(baseUrl, path = '', options = {}) {
@@ -28,15 +40,14 @@ async function requestData(baseUrl, path = '', options = {}) {
         'Content-Type': 'application/json',
         ...(options.headers ?? {}),
       },
+      withCredentials: true,
       ...options,
     })
 
-    return response.data
+    return getResponseData(response.data)
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data || `Request data gagal (${error.response?.status ?? 'network'})`, {
-        cause: error,
-      })
+      throw new Error(getErrorMessage(error), { cause: error })
     }
 
     throw error
@@ -47,28 +58,12 @@ async function requestMovies(path = '', options = {}) {
   return requestData(getMoviesApiUrl(), path, options)
 }
 
-async function requestWatchProgress(movieId, path = '', options = {}) {
-  return requestData(getWatchProgressApiUrl(movieId), path, options)
-}
-
 export function getMovies() {
-  return requestMovies()
+  return requestMovies('?take=50')
 }
 
-export async function getWatchProgress(movies = []) {
-  if (!Array.isArray(movies) || movies.length === 0) {
-    return []
-  }
-
-  const progressResponses = await Promise.allSettled(
-    movies.map((movie) => requestWatchProgress(movie.id)),
-  )
-
-  return progressResponses.flatMap((response) =>
-    response.status === 'fulfilled' && Array.isArray(response.value)
-      ? response.value
-      : [],
-  )
+export async function getWatchProgress() {
+  return requestData(getWatchProgressApiUrl())
 }
 
 export function createMovie(movie) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchMovies,
@@ -6,7 +6,10 @@ import {
   selectMoviesError,
   selectMoviesStatus,
 } from "../../store/redux/moviesSlice.js";
-import { mapApiMovieToPublicMovie } from "../../utils/movieMapper.js";
+import {
+  getSimilarMovieRecommendations,
+  mapApiMovieToPublicMovie,
+} from "../../utils/movieMapper.js";
 
 const myListLimit = 12;
 
@@ -15,6 +18,8 @@ function useMyListMovies() {
   const movies = useSelector(selectMovies);
   const moviesStatus = useSelector(selectMoviesStatus);
   const moviesError = useSelector(selectMoviesError);
+  const [selectedMovieDetail, setSelectedMovieDetail] = useState(null);
+  const [selectedSeriesDetail, setSelectedSeriesDetail] = useState(null);
 
   useEffect(() => {
     if (moviesStatus === "idle") {
@@ -27,11 +32,32 @@ function useMyListMovies() {
     [movies],
   );
 
+  const showMovieDetail = (detail) => {
+    if (detail) {
+      setSelectedMovieDetail({
+        ...detail,
+        recommendations: getSimilarMovieRecommendations(detail, movies),
+      });
+    }
+  };
+
+  const showSeriesDetail = (detail) => {
+    if (detail) {
+      setSelectedSeriesDetail(detail);
+    }
+  };
+
   return {
+    closeMovieDetail: () => setSelectedMovieDetail(null),
+    closeSeriesDetail: () => setSelectedSeriesDetail(null),
     isLoading: moviesStatus === "idle" || moviesStatus === "loading",
     moviesError,
     moviesStatus,
     myListMovies,
+    selectedMovieDetail,
+    selectedSeriesDetail,
+    showMovieDetail,
+    showSeriesDetail,
   };
 }
 

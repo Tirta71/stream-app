@@ -1,8 +1,13 @@
-function EyeIcon() {
+import { useState } from 'react'
+
+function EyeToggle({ isVisible, onToggle }) {
   return (
-    <span
-      aria-hidden="true"
-      className="absolute right-5 top-1/2 h-[22px] w-[22px] -translate-y-1/2 text-[rgba(193,194,196,0.88)] max-[640px]:right-4 max-[640px]:h-5 max-[640px]:w-5"
+    <button
+      type="button"
+      aria-label={isVisible ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+      aria-pressed={isVisible}
+      className="absolute right-5 top-1/2 grid h-[22px] w-[22px] -translate-y-1/2 place-items-center border-0 bg-transparent p-0 text-[rgba(193,194,196,0.88)] transition-colors duration-[160ms] hover:text-white max-[640px]:right-4 max-[640px]:h-5 max-[640px]:w-5"
+      onClick={onToggle}
     >
       <svg
         viewBox="0 0 24 24"
@@ -10,8 +15,9 @@ function EyeIcon() {
       >
         <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
         <circle cx="12" cy="12" r="3" />
+        {isVisible ? <path d="M4 4l16 16" /> : null}
       </svg>
-    </span>
+    </button>
   )
 }
 
@@ -33,7 +39,9 @@ function FormInput({
   autoComplete,
   size = 'default',
 }) {
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const isPassword = type === 'password'
+  const resolvedType = isPassword && isPasswordVisible ? 'text' : type
   const inputClassName = [
     'w-full rounded-full border border-[rgba(255,255,255,0.42)] bg-transparent text-[rgba(255,255,255,0.96)] outline-none transition-[border-color,box-shadow] duration-[160ms] placeholder:text-[rgba(193,194,196,0.75)] focus:border-white/70 focus:shadow-[0_0_0_3px_rgba(255,255,255,0.12)]',
     sizeClasses[size] ?? sizeClasses.default,
@@ -44,7 +52,7 @@ function FormInput({
 
   const inputElement = (
     <input
-      type={type}
+      type={resolvedType}
       name={name}
       placeholder={placeholder}
       value={value}
@@ -61,7 +69,10 @@ function FormInput({
       {isPassword ? (
         <span className="relative block">
           {inputElement}
-          <EyeIcon />
+          <EyeToggle
+            isVisible={isPasswordVisible}
+            onToggle={() => setIsPasswordVisible((currentValue) => !currentValue)}
+          />
         </span>
       ) : (
         inputElement

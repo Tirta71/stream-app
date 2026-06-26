@@ -3,14 +3,19 @@ import HeroSection from "../layout/HeroSection.jsx";
 import Navbar from "../layout/Navbar.jsx";
 import GenreDropdown from "../ui/GenreDropdown.jsx";
 import PageTransition from "../ui/PageTransition.jsx";
+import MovieDetailModal from "./MovieDetailModal.jsx";
 import MovieSection from "./MovieSection.jsx";
 
 function MovieContent({
   genreOptions,
   heroMovie,
+  onCloseMovieDetail,
   onGenreSelect,
+  onShowHeroDetail,
+  onShowMovieDetail,
   sections,
   selectedGenre,
+  selectedMovieDetail,
 }) {
   return (
     <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
@@ -24,6 +29,7 @@ function MovieContent({
         <HeroSection
           fallbackImage={heroMovie.fallbackImage}
           movie={heroMovie}
+          onShowDetail={onShowHeroDetail}
           variant="series"
         />
         <GenreDropdown
@@ -39,11 +45,16 @@ function MovieContent({
           <MovieSection
             key={section.key}
             movies={section.movies}
+            onShowMovieDetail={onShowMovieDetail}
             title={section.title}
             variant={section.variant}
           />
         ))}
       </PageTransition>
+      <MovieDetailModal
+        detail={selectedMovieDetail}
+        onClose={onCloseMovieDetail}
+      />
       <Footer />
     </div>
   );

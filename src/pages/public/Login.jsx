@@ -1,8 +1,11 @@
 import AuthForm from '../../components/public/auth/AuthForm.jsx'
 import AuthLayout from '../../components/public/auth/AuthLayout.jsx'
 import { loginAuth } from '../../data/auth.js'
+import useAuthForm from '../../hooks/public/useAuthForm.js'
 
 function Login() {
+  const authForm = useAuthForm('login')
+
   return (
     <AuthLayout
       title={loginAuth.layout.title}
@@ -14,6 +17,7 @@ function Login() {
         footerText={loginAuth.form.footerText}
         footerLink={loginAuth.form.footerLink}
         forgotPassword={loginAuth.form.forgotPassword}
+        {...authForm}
       />
     </AuthLayout>
   )
