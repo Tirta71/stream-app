@@ -27,6 +27,7 @@ function useAuthForm(mode) {
   const { completeLogin } = useAuthSession();
   const [values, setValues] = useState(defaultValues[mode]);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
 
@@ -39,6 +40,9 @@ function useAuthForm(mode) {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
+
+    setSuccessMessage("");
+    setError("");
 
     setValues((currentValues) => ({
       ...currentValues,
@@ -54,6 +58,7 @@ function useAuthForm(mode) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    setSuccessMessage("");
 
     if (isRegister && values.password !== values.confirmPassword) {
       setError("Konfirmasi kata sandi tidak sama");
@@ -74,6 +79,14 @@ function useAuthForm(mode) {
             password: values.password,
           });
 
+      if (isRegister && authData?.requiresEmailVerification) {
+        setValues(defaultValues.register);
+        setSuccessMessage(
+          "Pendaftaran berhasil. Kami telah mengirim tautan verifikasi ke email Anda.",
+        );
+        return;
+      }
+
       handleSuccess(authData);
     } catch (submitError) {
       setError(getAuthErrorMessage(submitError));
@@ -84,6 +97,7 @@ function useAuthForm(mode) {
 
   const handleGoogleLogin = async () => {
     setError("");
+    setSuccessMessage("");
     setIsGoogleSubmitting(true);
     window.location.assign(getGoogleLoginUrl());
   };
@@ -96,6 +110,7 @@ function useAuthForm(mode) {
     onChange: handleChange,
     onGoogleLogin: handleGoogleLogin,
     onSubmit: handleSubmit,
+    successMessage,
     values,
   };
 }

@@ -86,6 +86,7 @@ const create = async (payload) =>
       publishedAt: payload.publishedAt ?? new Date(),
       type: normalizeType(payload.type),
     },
+    include: contentInclude,
   });
 
 const update = async (id, payload) =>
@@ -94,6 +95,7 @@ const update = async (id, payload) =>
       ...payload,
       type: normalizeType(payload.type),
     },
+    include: contentInclude,
     where: { id },
   });
 

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
 import Footer from "../layout/Footer.jsx";
 import Navbar from "../layout/Navbar.jsx";
@@ -59,22 +60,71 @@ function SubscriptionIcon() {
   );
 }
 
-function ProfileField({ editable = false, label, value }) {
+function ProfileField({
+  editable = false,
+  label,
+  minLength,
+  name,
+  onChange,
+  placeholder,
+  type = "text",
+  value,
+}) {
+  const inputRef = useRef(null);
+
+  const focusInput = () => {
+    if (!editable) {
+      return;
+    }
+
+    inputRef.current?.focus();
+  };
+
+  const selectInput = () => {
+    if (!editable) {
+      return;
+    }
+
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  };
+
   return (
-    <div className="flex min-h-16 items-center justify-between rounded-md border border-[#4a5358] bg-[#202829] px-4 py-2.5 max-[640px]:min-h-[56px]">
-      <div className="min-w-0">
-        <p className="m-0 text-base font-semibold leading-[1.2] text-[#a8aaad] max-[640px]:text-sm">
+    <div
+      className={`flex min-h-16 items-center justify-between rounded-md border border-[#4a5358] bg-[#202829] px-4 py-2.5 max-[640px]:min-h-[56px] ${
+        editable ? "cursor-text" : ""
+      }`}
+      onClick={focusInput}
+    >
+      <div className="min-w-0 flex-1">
+        <label
+          className={`m-0 text-base font-semibold leading-[1.2] text-[#a8aaad] max-[640px]:text-sm ${
+            editable ? "cursor-text" : ""
+          }`}
+          htmlFor={name}
+        >
           {label}
-        </p>
-        <p className="m-0 mt-1 truncate text-lg leading-[1.2] text-white max-[640px]:text-base">
-          {value}
-        </p>
+        </label>
+        <input
+          className="m-0 mt-1 block w-full border-0 bg-transparent p-0 text-lg leading-[1.2] text-white outline-none placeholder:text-white max-[640px]:text-base"
+          id={name}
+          minLength={minLength}
+          name={name}
+          onChange={onChange}
+          onClick={(event) => event.stopPropagation()}
+          placeholder={placeholder}
+          readOnly={!editable}
+          ref={inputRef}
+          type={type}
+          value={value ?? ""}
+        />
       </div>
       {editable ? (
         <button
           type="button"
           className="ml-4 grid h-8 w-8 shrink-0 place-items-center border-0 bg-transparent text-white"
           aria-label={`Ubah ${label}`}
+          onClick={selectInput}
         >
           <EditIcon />
         </button>
@@ -127,9 +177,18 @@ function SubscriptionCard({ isSubscribed, subscription }) {
   );
 }
 
-function ProfileForm({ profile }) {
+function ProfileForm({
+  error,
+  isSaving,
+  message,
+  onChange,
+  onPhotoChange,
+  onSubmit,
+  profile,
+  profileForm,
+}) {
   return (
-    <section>
+    <form onSubmit={onSubmit}>
       <h1 className="m-0 text-[32px] font-bold leading-[1.2] max-[640px]:text-xl">
         Profil Saya
       </h1>
@@ -141,12 +200,20 @@ function ProfileForm({ profile }) {
           alt="Foto profil"
         />
         <div className="flex flex-col items-start gap-2 max-[640px]:gap-1">
-          <button
-            type="button"
-            className="min-h-10 min-w-[120px] rounded-full border border-[#3254ff] bg-transparent px-5 text-base font-bold text-[#3254ff] transition-colors hover:bg-[#3254ff]/10 max-[640px]:min-h-9 max-[640px]:min-w-[93px] max-[640px]:px-4 max-[640px]:text-sm"
+          <input
+            accept="image/gif,image/jpeg,image/png,image/webp"
+            className="sr-only"
+            id="profile-photo"
+            name="photo"
+            onChange={onPhotoChange}
+            type="file"
+          />
+          <label
+            className="inline-flex min-h-10 min-w-[120px] cursor-pointer items-center justify-center rounded-full border border-[#3254ff] bg-transparent px-5 text-base font-bold text-[#3254ff] transition-colors hover:bg-[#3254ff]/10 max-[640px]:min-h-9 max-[640px]:min-w-[93px] max-[640px]:px-4 max-[640px]:text-sm"
+            htmlFor="profile-photo"
           >
             Ubah Foto
-          </button>
+          </label>
           <p className="m-0 mt-3 inline-flex items-center gap-2 text-sm text-[#c1c2c4] max-[640px]:text-xs">
             <UploadIcon />
             {profile.maxUploadSize}
@@ -155,31 +222,66 @@ function ProfileForm({ profile }) {
       </div>
 
       <div className="mt-8 space-y-8 max-[640px]:mt-7 max-[640px]:space-y-6">
-        <ProfileField editable label="Nama Pengguna" value={profile.name} />
-        <ProfileField label="Email" value={profile.email} />
-        <ProfileField editable label="Kata Sandi" value={profile.password} />
+        <ProfileField
+          editable
+          label="Nama Pengguna"
+          minLength={2}
+          name="name"
+          onChange={onChange}
+          value={profileForm.name}
+        />
+        <ProfileField label="Email" name="email" value={profile.email} />
+        <ProfileField
+          editable
+          label="Kata Sandi"
+          minLength={8}
+          name="password"
+          onChange={onChange}
+          placeholder={profile.password}
+          type="password"
+          value={profileForm.password}
+        />
       </div>
 
+      {message ? (
+        <p className="m-0 mt-4 text-sm font-semibold text-[#c8d1ff]">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="m-0 mt-4 text-sm font-semibold text-[#ffb4b4]">
+          {error}
+        </p>
+      ) : null}
+
       <button
-        type="button"
-        className="mt-8 min-h-[42px] min-w-[105px] rounded-full bg-[#0f1e93] px-6 text-base font-bold text-white transition-colors hover:bg-[#1728b8] max-[640px]:hidden"
+        disabled={isSaving}
+        type="submit"
+        className="mt-8 min-h-[42px] min-w-[105px] rounded-full bg-[#0f1e93] px-6 text-base font-bold text-white transition-colors hover:bg-[#1728b8] disabled:cursor-not-allowed disabled:opacity-70 max-[640px]:mt-6"
       >
-        Simpan
+        {isSaving ? "Menyimpan..." : "Simpan"}
       </button>
-    </section>
+    </form>
   );
 }
 
 function ProfileContent({
   error,
   isLoading,
+  isSavingProfile,
   isSubscribed,
   movies,
   onCloseMovieDetail,
   onCloseSeriesDetail,
+  onProfileChange,
+  onProfilePhotoChange,
+  onProfileSubmit,
   onShowMovieDetail,
   onShowSeriesDetail,
   profile,
+  profileError,
+  profileForm,
+  profileMessage,
   selectedMovieDetail,
   selectedSeriesDetail,
   status,
@@ -190,7 +292,16 @@ function ProfileContent({
       <Navbar />
       <PageTransition className="bg-[#181a1c] px-20 pb-20 pt-10 max-[900px]:px-5 max-[640px]:pb-9 max-[640px]:pt-7">
         <div className="grid grid-cols-[minmax(0,642px)_minmax(360px,558px)] items-start justify-between gap-20 max-[900px]:grid-cols-1 max-[900px]:gap-7">
-          <ProfileForm profile={profile} />
+          <ProfileForm
+            isSaving={isSavingProfile}
+            error={profileError}
+            message={profileMessage}
+            onChange={onProfileChange}
+            onPhotoChange={onProfilePhotoChange}
+            onSubmit={onProfileSubmit}
+            profile={profile}
+            profileForm={profileForm}
+          />
           <SubscriptionCard
             isSubscribed={isSubscribed}
             subscription={subscription}

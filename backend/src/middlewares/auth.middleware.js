@@ -48,6 +48,14 @@ const authMiddleware = asyncHandler(async (req, _res, next) => {
   }
 
   const user = await prisma.user.findUnique({
+    select: {
+      email: true,
+      emailVerifiedAt: true,
+      id: true,
+      name: true,
+      photoUrl: true,
+      role: true,
+    },
     where: { id: BigInt(payload.id) },
   });
 

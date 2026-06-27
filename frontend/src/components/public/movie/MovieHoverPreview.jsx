@@ -1,7 +1,10 @@
 import { replaceBrokenImage } from "../../../utils/imageFallback.js";
+import MyListIcon from "../ui/MyListIcon.jsx";
 
 function CircleButton({
   children,
+  disabled = false,
+  isSelected = false,
   label,
   onClick,
   variant = 'outline',
@@ -11,16 +14,27 @@ function CircleButton({
   const className =
     variant === 'solid'
       ? [
-          'grid place-items-center rounded-full bg-white text-[#181a1c] transition-transform duration-150 hover:scale-105',
+          'grid place-items-center rounded-full border border-white bg-white text-[#181a1c] transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-200 ease-out hover:scale-105',
+          disabled ? 'cursor-wait opacity-70 hover:scale-100' : '',
           isCompact ? 'size-9' : 'size-[48px]',
         ].join(' ')
       : [
-          'grid place-items-center rounded-full border border-[#c1c2c4] text-white transition-[border-color,transform] duration-150 hover:scale-105 hover:border-white',
+          'grid place-items-center rounded-full border transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-200 ease-out hover:scale-105',
+          isSelected
+            ? 'border-white bg-white text-[#181a1c] shadow-[0_8px_20px_rgba(255,255,255,0.16)] hover:bg-white hover:text-[#181a1c]'
+            : 'border-[#c1c2c4] bg-transparent text-white hover:border-white hover:bg-white/8',
+          disabled ? 'cursor-wait opacity-70 hover:scale-100' : '',
           isCompact ? 'size-10' : 'size-[54px]',
         ].join(' ')
 
   return (
-    <button type="button" className={className} aria-label={label} onClick={onClick}>
+    <button
+      type="button"
+      className={className}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+    >
       {children}
     </button>
   )
@@ -62,8 +76,12 @@ function MovieHoverPreview({
   episodeTitle,
   duration,
   genres = [],
+  isInMyList = false,
   leftOffset,
+  isMyListSaving = false,
+  onPlay,
   onShowDetail,
+  onToggleMyList,
   placement = 'center',
   progress = 35,
   type,
@@ -111,18 +129,22 @@ function MovieHoverPreview({
       <div className={`${previewBodyClassName} bg-[#181a1c] text-white`}>
         <div className="flex h-[55px] items-start justify-between">
           <div className="flex items-center gap-5">
-            <CircleButton label="Putar" variant="solid">
+            <CircleButton label="Putar" onClick={onPlay} variant="solid">
               <svg viewBox="0 0 24 24" className="ml-1 size-6 fill-current">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </CircleButton>
-            <CircleButton label="Tambahkan ke daftar">
-              <svg
-                viewBox="0 0 24 24"
-                className="size-[29px] fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2]"
-              >
-                <path d="m5 12 4 4L19 6" />
-              </svg>
+            <CircleButton
+              disabled={isMyListSaving}
+              isSelected={isInMyList}
+              label={
+                isInMyList
+                  ? "Hapus dari daftar saya"
+                  : "Tambahkan ke daftar saya"
+              }
+              onClick={onToggleMyList}
+            >
+              <MyListIcon isSaved={isInMyList} />
             </CircleButton>
           </div>
           <CircleButton label="Detail" onClick={onShowDetail}>

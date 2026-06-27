@@ -1,5 +1,5 @@
-import MovieContent from "../../components/public/movie/MovieContent.jsx";
-import useMovieMovies from "../../hooks/public/useMovieMovies.js";
+import MovieContent from "../../../components/public/movie/MovieContent.jsx";
+import useMovieMovies from "../../../hooks/public/useMovieMovies.js";
 
 function Movie() {
   const {

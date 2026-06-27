@@ -1,10 +1,26 @@
 import prisma from "../../config/prisma.js";
 
+const myListInclude = {
+  seriesFilm: {
+    include: {
+      episodes: true,
+      genres: {
+        include: {
+          genre: true,
+        },
+      },
+      people: {
+        include: {
+          person: true,
+        },
+      },
+    },
+  },
+};
+
 const findAll = async (userId) =>
   prisma.myList.findMany({
-    include: {
-      seriesFilm: true,
-    },
+    include: myListInclude,
     orderBy: { createdAt: "desc" },
     where: { userId: BigInt(userId) },
   });
@@ -26,6 +42,7 @@ const add = async (userId, seriesFilmId) => {
       seriesFilmId,
       userId: BigInt(userId),
     },
+    include: myListInclude,
   });
 };
 

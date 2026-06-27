@@ -8,16 +8,29 @@ import {
   selectMovies,
   selectMoviesError,
   selectMoviesStatus,
+  selectWatchProgress,
 } from "../../store/redux/moviesSlice.js";
 
 const moviePageSize = 7;
 
 const adminPageSections = {
-  home: ["continueWatching", "topRatedMovies", "trendingMovies", "newReleases"],
-  movie: ["continueWatching", "topRatedMovies", "trendingMovies", "newReleases"],
+  home: [
+    "continueWatching",
+    "premiumContents",
+    "topRatedMovies",
+    "trendingMovies",
+    "newReleases",
+  ],
+  movie: [
+    "continueWatching",
+    "premiumContents",
+    "topRatedMovies",
+    "trendingMovies",
+    "newReleases",
+  ],
   series: [
     "continueWatching",
-    "seriesFeatured",
+    "premiumContents",
     "topRatedMovies",
     "trendingMovies",
     "newReleases",
@@ -46,74 +59,128 @@ function getErrorMessage(error, fallbackMessage) {
   return fallbackMessage;
 }
 
-function getResolvedPreviewType(movie, section) {
-  const episodeCount = movie.episodeCount?.trim().toLowerCase() ?? "";
+function getBooleanField(movie, camelKey, snakeKey, fallbackValue = false) {
+  const value = movie?.[camelKey] ?? movie?.[snakeKey];
 
-  if (section === "continueWatching" || movie.previewType === "continue") {
-    return "continue";
+  if (value === undefined || value === null) {
+    return fallbackValue;
   }
 
-  if (
-    movie.type === "series" ||
-    movie.previewType === "series" ||
-    (episodeCount && episodeCount !== "movie")
-  ) {
-    return "series";
-  }
-
-  return "movie";
-}
-
-function getMoviePayload(movie) {
-  const progress = Number(movie.progress);
-  const section = movie.section.trim();
-
-  return {
-    slug: movie.slug?.trim() || createMovieSlug(movie.title),
-    type: movie.type?.trim() || "movie",
-    section,
-    sectionTitle: movie.sectionTitle.trim(),
-    title: movie.title.trim(),
-    image: movie.image.trim(),
-    rating: movie.rating?.trim() ?? "",
-    badge: movie.badge?.trim() ?? "",
-    top: Boolean(movie.top),
-    description: movie.description?.trim() ?? "",
-    previewImage: movie.previewImage?.trim() || movie.image.trim(),
-    ageRating: movie.ageRating?.trim() ?? "13+",
-    episodeCount: movie.episodeCount?.trim() ?? "",
-    duration: movie.duration?.trim() ?? "",
-    episodeTitle: movie.episodeTitle?.trim() ?? "",
-    genres: movie.genres?.trim() ?? "",
-    progress: Number.isFinite(progress) ? progress : 0,
-    previewType: getResolvedPreviewType(movie, section),
-  };
+  return value === true || value === "true";
 }
 
 function getMovieType(movie) {
-  return movie.type || (movie.previewType === "series" ? "series" : "movie");
+  const type = String(movie?.type || "").toLowerCase();
+
+  return type === "series" ? "series" : "movie";
 }
 
-function getFilteredMovies(movies, pageFilter, sectionFilter) {
-  return movies.filter((movie) => {
-    const section = movie.section || movie.category || "";
-    const type = getMovieType(movie);
-    const isInSection =
-      sectionFilter === "all" ? true : section === sectionFilter;
+function getMovieRating(movie) {
+  const rating = Number(movie?.rating);
 
-    if (!isInSection) {
+  return Number.isFinite(rating) ? rating : 0;
+}
+
+function getProgressMovieId(watchProgress) {
+  return (
+    watchProgress?.seriesFilmId ??
+    watchProgress?.series_film_id ??
+    watchProgress?.movieId ??
+    watchProgress?.movie_id
+  );
+}
+
+function isInWatchProgress(movie, watchProgressItems) {
+  return watchProgressItems.some(
+    (watchProgress) =>
+      String(getProgressMovieId(watchProgress)) === String(movie.id),
+  );
+}
+
+function getPublishedAt(movie) {
+  return movie?.publishedAt ?? movie?.published_at ?? "";
+}
+
+function getMoviePayload(movie) {
+  const rating = Number(movie.rating);
+  const releaseYear = Number(movie.releaseYear);
+  const selectedSection = movie.section || "";
+  const badge = movie.badge?.trim() || null;
+  const publishedAt = movie.publishedAt ? new Date(movie.publishedAt) : null;
+
+  return {
+    ageRating: movie.ageRating?.trim() || "13+",
+    badge,
+    description: movie.description?.trim() || "Deskripsi belum tersedia.",
+    image: movie.image.trim(),
+    isActive: movie.isActive !== false,
+    isPremium:
+      movie.isPremium ||
+      selectedSection === "premiumContents" ||
+      badge?.toLowerCase() === "premium",
+    isTopTen: Boolean(movie.top || movie.isTopTen),
+    isTrending: Boolean(movie.isTrending || selectedSection === "trendingMovies"),
+    previewImage: movie.previewImage?.trim() || movie.image.trim(),
+    ...(publishedAt ? { publishedAt } : {}),
+    rating: Number.isFinite(rating) ? rating : 0,
+    releaseYear: Number.isFinite(releaseYear) ? releaseYear : null,
+    slug: movie.slug?.trim() || createMovieSlug(movie.title),
+    title: movie.title.trim(),
+    trailerUrl: movie.trailerUrl?.trim() || null,
+    type: getMovieType(movie),
+  };
+}
+
+function isInSection(movie, sectionFilter, watchProgressItems) {
+  if (sectionFilter === "all") {
+    return true;
+  }
+
+  if (sectionFilter === "continueWatching") {
+    return isInWatchProgress(movie, watchProgressItems);
+  }
+
+  if (sectionFilter === "premiumContents") {
+    return getBooleanField(movie, "isPremium", "is_premium");
+  }
+
+  if (sectionFilter === "topRatedMovies") {
+    return getBooleanField(movie, "isTopTen", "is_top_ten") || getMovieRating(movie) >= 4;
+  }
+
+  if (sectionFilter === "trendingMovies") {
+    return getBooleanField(movie, "isTrending", "is_trending");
+  }
+
+  if (sectionFilter === "newReleases") {
+    return Boolean(getPublishedAt(movie) || movie?.releaseYear || movie?.release_year);
+  }
+
+  return true;
+}
+
+function getFilteredMovies(movies, watchProgressItems, pageFilter, sectionFilter) {
+  return movies.filter((movie) => {
+    const type = getMovieType(movie);
+    const isInSelectedSection =
+      sectionFilter === "all"
+        ? true
+        : adminPageSections[pageFilter].includes(sectionFilter) &&
+          isInSection(movie, sectionFilter, watchProgressItems);
+
+    if (!isInSelectedSection) {
       return false;
     }
 
     if (pageFilter === "series") {
-      return type === "series" && adminPageSections.series.includes(section);
+      return type === "series";
     }
 
     if (pageFilter === "movie") {
-      return type === "movie" && adminPageSections.movie.includes(section);
+      return type === "movie";
     }
 
-    return adminPageSections.home.includes(section);
+    return true;
   });
 }
 
@@ -134,6 +201,7 @@ function useManageMovies() {
   const movies = useSelector(selectMovies);
   const moviesStatus = useSelector(selectMoviesStatus);
   const moviesError = useSelector(selectMoviesError);
+  const watchProgress = useSelector(selectWatchProgress);
   const [editingMovie, setEditingMovie] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageFilter, setPageFilter] = useState("home");
@@ -144,7 +212,12 @@ function useManageMovies() {
   const isLoading = moviesStatus === "idle" || moviesStatus === "loading";
   const visibleErrorMessage =
     errorMessage || (moviesStatus === "failed" ? moviesError : "");
-  const filteredMovies = getFilteredMovies(movies, pageFilter, sectionFilter);
+  const filteredMovies = getFilteredMovies(
+    movies,
+    watchProgress,
+    pageFilter,
+    sectionFilter,
+  );
   const { activePage, paginatedMovies, totalPages } = getPaginatedMovies(
     filteredMovies,
     currentPage,

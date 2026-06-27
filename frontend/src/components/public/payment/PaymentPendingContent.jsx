@@ -1,7 +1,8 @@
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import Footer from "../layout/Footer.jsx";
 import Navbar from "../layout/Navbar.jsx";
 import SubscriptionPackageCard from "../subscription/SubscriptionPackageCard.jsx";
+import PageMessage from "../ui/PageMessage.jsx";
 import PageTransition from "../ui/PageTransition.jsx";
 import {
   BcaIcon,
@@ -20,18 +21,46 @@ function CountdownBox({ label, value }) {
   );
 }
 
-function CountdownBanner() {
+function getRemainingTime(expiredAt) {
+  const target = expiredAt ? Date.parse(expiredAt) : Date.now() + 15 * 60 * 1000;
+  const totalSeconds = Math.max(0, Math.floor((target - Date.now()) / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return {
+    hours: String(hours).padStart(2, "0"),
+    minutes: String(minutes).padStart(2, "0"),
+    seconds: String(seconds).padStart(2, "0"),
+  };
+}
+
+function CountdownBanner({ expiredAt }) {
+  const [remainingTime, setRemainingTime] = useState(() =>
+    getRemainingTime(expiredAt),
+  );
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => {
+      setRemainingTime(getRemainingTime(expiredAt));
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [expiredAt]);
+
   return (
     <section className="rounded-[10px] bg-[#202829] px-6 py-7 text-center max-[640px]:rounded-lg max-[640px]:px-6 max-[640px]:py-7">
       <h1 className="m-0 text-base font-normal leading-[1.4]">
         Lakukan Pembayaran Sebelum
       </h1>
       <div className="mt-4 flex items-center justify-center gap-4 max-[640px]:gap-2.5">
-        <CountdownBox label="Jam" value="00" />
+        <CountdownBox label="Jam" value={remainingTime.hours} />
         <span className="text-2xl font-bold max-[640px]:text-xl">:</span>
-        <CountdownBox label="Menit" value="14" />
+        <CountdownBox label="Menit" value={remainingTime.minutes} />
         <span className="text-2xl font-bold max-[640px]:text-xl">:</span>
-        <CountdownBox label="Detik" value="58" />
+        <CountdownBox label="Detik" value={remainingTime.seconds} />
       </div>
     </section>
   );
@@ -50,18 +79,42 @@ function CopyIcon() {
   );
 }
 
-function PaymentMeta() {
+function formatDate(value) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function PaymentMeta({ order, payment }) {
+  const paymentCode = payment?.transactionId || order?.orderCode || "-";
+  const copyPaymentCode = () => {
+    navigator.clipboard?.writeText(paymentCode).catch(() => null);
+  };
+
   return (
     <dl className="m-0 mt-5 grid grid-cols-[1fr_auto] gap-y-3 text-base leading-[1.35] max-[640px]:text-xs">
       <dt className="text-white/70">Tanggal Pembelian</dt>
-      <dd className="m-0 text-white">08 Juni 2023</dd>
+      <dd className="m-0 text-white">{formatDate(order?.createdAt)}</dd>
       <dt className="text-white/70">Kode Pembayaran</dt>
       <dd className="m-0 flex items-center gap-2 text-white">
-        3KDJ5XFOV
+        {paymentCode}
         <button
           aria-label="Salin kode pembayaran"
           className="grid h-6 w-6 place-items-center border-0 bg-transparent p-0 text-[#3254ff]"
           type="button"
+          onClick={copyPaymentCode}
         >
           <CopyIcon />
         </button>
@@ -93,12 +146,56 @@ function PaymentInstructions() {
   );
 }
 
-function PaymentPendingContent({ adminFee, formatRupiah, plan, totalPayment }) {
+function PaymentPendingContent({
+  adminFee,
+  error,
+  formatRupiah,
+  isLoading,
+  isSubmitting,
+  onConfirmPayment,
+  order,
+  payment,
+  plan,
+  totalPayment,
+}) {
+  const expiredAt = order?.paymentExpiredAt;
+  const selectedPayment = useMemo(
+    () => payment ?? (Array.isArray(order?.payments) ? order.payments[0] : null),
+    [order, payment],
+  );
+
+  if (isLoading && !plan) {
+    return (
+      <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
+        <Navbar />
+        <main className="grid min-h-[60svh] place-items-center px-5">
+          <PageMessage message="Memuat pembayaran..." />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
+        <Navbar />
+        <main className="grid min-h-[60svh] place-items-center px-5">
+          <PageMessage
+            message={error || "Data pembayaran tidak tersedia."}
+            variant="danger"
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
       <Navbar />
       <PageTransition className="bg-[#181a1c] px-20 pb-10 pt-10 max-[900px]:px-5 max-[640px]:pb-9 max-[640px]:pt-7">
-        <CountdownBanner />
+        <CountdownBanner expiredAt={expiredAt} />
 
         <h1 className="m-0 mt-10 text-[32px] font-bold leading-[1.2] max-[640px]:mt-6 max-[640px]:text-xl">
           Ringkasan Pembayaran
@@ -126,7 +223,7 @@ function PaymentPendingContent({ adminFee, formatRupiah, plan, totalPayment }) {
               </div>
             </section>
 
-            <PaymentMeta />
+            <PaymentMeta order={order} payment={selectedPayment} />
 
             <TransactionSummary
               adminFee={adminFee}
@@ -137,12 +234,22 @@ function PaymentPendingContent({ adminFee, formatRupiah, plan, totalPayment }) {
 
             <PaymentInstructions />
 
-            <Link
-              className="mt-8 inline-flex min-h-[42px] min-w-[94px] items-center justify-center rounded-full bg-[#0f1e93] px-6 text-base font-bold text-white transition-colors hover:bg-[#1728b8] max-[640px]:mt-5 max-[640px]:min-h-10 max-[640px]:min-w-[70px] max-[640px]:text-sm"
-              to="/profil?premium=true"
+            {error ? (
+              <PageMessage
+                className="mt-6 max-w-[560px] px-4 py-3 text-left"
+                message={error}
+                variant="danger"
+              />
+            ) : null}
+
+            <button
+              className="mt-8 inline-flex min-h-[42px] min-w-[94px] items-center justify-center rounded-full bg-[#0f1e93] px-6 text-base font-bold text-white transition-colors hover:bg-[#1728b8] disabled:opacity-60 max-[640px]:mt-5 max-[640px]:min-h-10 max-[640px]:min-w-[70px] max-[640px]:text-sm"
+              disabled={isSubmitting}
+              type="button"
+              onClick={onConfirmPayment}
             >
-              Bayar
-            </Link>
+              {isSubmitting ? "Memproses..." : "Bayar"}
+            </button>
           </div>
         </div>
       </PageTransition>

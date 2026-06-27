@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
 import Footer from "../layout/Footer.jsx";
 import Navbar from "../layout/Navbar.jsx";
 import SubscriptionPackageCard from "../subscription/SubscriptionPackageCard.jsx";
+import PageMessage from "../ui/PageMessage.jsx";
 import PageTransition from "../ui/PageTransition.jsx";
 
 function RadioMark({ selected = false }) {
@@ -83,7 +83,43 @@ function TransactionSummary({ adminFee, formatRupiah, plan, totalPayment }) {
   );
 }
 
-function PaymentContent({ adminFee, formatRupiah, plan, totalPayment }) {
+function PaymentContent({
+  adminFee,
+  error,
+  formatRupiah,
+  isLoading,
+  isSubmitting,
+  onPay,
+  plan,
+  totalPayment,
+}) {
+  if (isLoading && !plan) {
+    return (
+      <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
+        <Navbar />
+        <main className="grid min-h-[60svh] place-items-center px-5">
+          <PageMessage message="Memuat ringkasan pembayaran..." />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
+        <Navbar />
+        <main className="grid min-h-[60svh] place-items-center px-5">
+          <PageMessage
+            message={error || "Paket langganan tidak tersedia."}
+            variant="danger"
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
       <Navbar />
@@ -147,12 +183,22 @@ function PaymentContent({ adminFee, formatRupiah, plan, totalPayment }) {
               totalPayment={totalPayment}
             />
 
-            <Link
-              className="mt-5 inline-flex min-h-[42px] min-w-[94px] items-center justify-center rounded-full bg-[#0f1e93] px-6 text-base font-bold text-white transition-colors hover:bg-[#1728b8] max-[640px]:mt-4 max-[640px]:min-h-10 max-[640px]:min-w-[70px] max-[640px]:text-sm"
-              to={`/pembayaran/menunggu?paket=${plan.id}`}
+            {error ? (
+              <PageMessage
+                className="mt-5 max-w-[470px] px-4 py-3 text-left"
+                message={error}
+                variant="danger"
+              />
+            ) : null}
+
+            <button
+              className="mt-5 inline-flex min-h-[42px] min-w-[94px] items-center justify-center rounded-full bg-[#0f1e93] px-6 text-base font-bold text-white transition-colors hover:bg-[#1728b8] disabled:opacity-60 max-[640px]:mt-4 max-[640px]:min-h-10 max-[640px]:min-w-[70px] max-[640px]:text-sm"
+              disabled={isSubmitting}
+              type="button"
+              onClick={() => onPay?.("BCA Virtual Account")}
             >
-              Bayar
-            </Link>
+              {isSubmitting ? "Memproses..." : "Bayar"}
+            </button>
           </div>
         </div>
       </PageTransition>

@@ -19,6 +19,7 @@ import {
   sortByPublishedDesc,
   sortByRatingDesc,
 } from "../../utils/movieMapper.js";
+import useCurrentSubscription from "./useCurrentSubscription.js";
 
 const seriesHeroFallback = {
   title: "Happiness",
@@ -37,11 +38,7 @@ const seriesSectionConfigs = [
     variant: "landscape",
   },
   {
-    getItems: ({ seriesMovies }) => {
-      const premiumSeries = seriesMovies.filter(isPremiumMovie);
-
-      return premiumSeries.length ? premiumSeries : seriesMovies;
-    },
+    getItems: ({ seriesMovies }) => seriesMovies.filter(isPremiumMovie),
     key: "seriesFeatured",
     title: "Series Persembahan Chill",
   },
@@ -106,6 +103,7 @@ function useSeriesMovies() {
   const movies = useSelector(selectMovies);
   const moviesStatus = useSelector(selectMoviesStatus);
   const watchProgress = useSelector(selectWatchProgress);
+  const { isSubscribed } = useCurrentSubscription();
   const [selectedGenre, setSelectedGenre] = useState("");
   const [selectedSeriesDetail, setSelectedSeriesDetail] = useState(null);
 
@@ -116,8 +114,14 @@ function useSeriesMovies() {
   }, [dispatch, moviesStatus]);
 
   const seriesMovies = useMemo(
-    () => movies.filter((movie) => isActiveMovie(movie) && isSeriesMovie(movie)),
-    [movies],
+    () =>
+      movies.filter(
+        (movie) =>
+          isActiveMovie(movie) &&
+          isSeriesMovie(movie) &&
+          (isSubscribed || !isPremiumMovie(movie)),
+      ),
+    [isSubscribed, movies],
   );
 
   const genreOptions = useMemo(() => {

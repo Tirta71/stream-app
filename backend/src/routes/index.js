@@ -9,6 +9,7 @@ import orderRoutes from "../modules/orders/order.routes.js";
 import packageRoutes from "../modules/packages/package.routes.js";
 import paymentRoutes from "../modules/payments/payment.routes.js";
 import subscriptionRoutes from "../modules/subscriptions/subscription.routes.js";
+import uploadRoutes from "../modules/uploads/upload.routes.js";
 import userRoutes from "../modules/users/user.routes.js";
 import watchProgressRoutes from "../modules/watch-progress/watch-progress.routes.js";
 
@@ -24,6 +25,7 @@ router.get("/health", (_req, res) => {
 router.use("/auth", authRoutes);
 router.use(authMiddleware);
 router.use("/users", userRoutes);
+router.use("/upload", uploadRoutes);
 router.use("/movies", contentRoutes);
 router.use("/genres", genreRoutes);
 router.use("/episodes", episodeRoutes);

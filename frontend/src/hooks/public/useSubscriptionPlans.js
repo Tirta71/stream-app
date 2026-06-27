@@ -1,54 +1,120 @@
-const adminFee = 3000;
+import { useEffect, useMemo, useState } from "react";
+import { getPackages } from "../../services/accountApi.js";
 
-const subscriptionPlans = [
-  {
-    accountLabel: "1 Akun",
-    features: ["Tidak ada iklan", "Kualitas 720p", "Download konten pilihan"],
-    id: "individual",
-    name: "Individual",
-    paymentLabel: "Paket Premium Individual",
-    price: 49000,
-    priceLabel: "Mulai dari Rp49,990/bulan",
-  },
-  {
-    accountLabel: "2 Akun",
-    features: ["Tidak ada iklan", "Kualitas 1080p", "Download konten pilihan"],
-    id: "berdua",
-    name: "Berdua",
-    paymentLabel: "Paket Premium Berdua",
-    price: 79000,
-    priceLabel: "Mulai dari Rp79,990/bulan",
-  },
-  {
-    accountLabel: "5-7 Akun",
-    features: ["Tidak ada iklan", "Kualitas 4K", "Download konten pilihan"],
-    id: "keluarga",
-    name: "Keluarga",
-    paymentLabel: "Paket Premium Keluarga",
-    price: 159000,
-    priceLabel: "Mulai dari Rp159,990/bulan",
-  },
-];
+const adminFee = 3000;
 
 const formatRupiah = (value) =>
   `Rp${new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 0,
-  }).format(value)}`;
+  }).format(Number(value) || 0)}`;
 
-const getSubscriptionPlan = (planId) =>
-  subscriptionPlans.find((plan) => plan.id === planId) ?? subscriptionPlans[0];
+function getAccountLabel(maxDevices) {
+  const deviceCount = Number(maxDevices) || 1;
 
-function useSubscriptionPlans(selectedPlanId) {
-  const selectedPlan = getSubscriptionPlan(selectedPlanId);
+  if (deviceCount >= 5) {
+    return "5-7 Akun";
+  }
+
+  return `${deviceCount} Akun`;
+}
+
+function getPaymentLabel(name) {
+  return `Paket Premium ${name}`;
+}
+
+function mapPackageToPlan(plan) {
+  const price = Number(plan?.price) || 0;
+  const quality = plan?.quality || "720p";
+  const name = plan?.name || "Individual";
 
   return {
-    adminFee,
-    formatRupiah,
-    plans: subscriptionPlans,
-    selectedPlan,
-    totalPayment: selectedPlan.price + adminFee,
+    accountLabel: getAccountLabel(plan?.maxDevices ?? plan?.max_devices),
+    durationDays: Number(plan?.durationDays ?? plan?.duration_days) || 30,
+    features: [
+      "Tidak ada iklan",
+      `Kualitas ${quality}`,
+      "Download konten pilihan",
+    ],
+    id: String(plan?.id ?? name).toLowerCase(),
+    name,
+    packageId: plan?.id,
+    paymentLabel: getPaymentLabel(name),
+    price,
+    priceLabel: `Mulai dari ${formatRupiah(price)}/bulan`,
+    quality,
   };
 }
 
-export { formatRupiah, getSubscriptionPlan, subscriptionPlans };
+function getSubscriptionPlan(plans, planId) {
+  if (!plans.length) {
+    return null;
+  }
+
+  const normalizedPlanId = String(planId ?? "").toLowerCase();
+
+  return (
+    plans.find(
+      (plan) =>
+        String(plan.id).toLowerCase() === normalizedPlanId ||
+        plan.name.toLowerCase() === normalizedPlanId,
+    ) ?? plans[0]
+  );
+}
+
+function useSubscriptionPlans(selectedPlanId) {
+  const [packages, setPackages] = useState([]);
+  const [status, setStatus] = useState("loading");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isActive = true;
+
+    getPackages()
+      .then((items) => {
+        if (!isActive) {
+          return;
+        }
+
+        setPackages(Array.isArray(items) ? items : []);
+        setStatus("succeeded");
+      })
+      .catch((requestError) => {
+        if (!isActive) {
+          return;
+        }
+
+        setPackages([]);
+        setStatus("failed");
+        setError(requestError.message || "Gagal mengambil paket langganan");
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const plans = useMemo(() => packages.map(mapPackageToPlan), [packages]);
+  const selectedPlan = useMemo(
+    () => getSubscriptionPlan(plans, selectedPlanId),
+    [plans, selectedPlanId],
+  );
+
+  return {
+    adminFee,
+    error,
+    formatRupiah,
+    isLoading: status === "idle" || status === "loading",
+    plans,
+    selectedPlan,
+    status,
+    totalPayment: selectedPlan ? selectedPlan.price + adminFee : adminFee,
+  };
+}
+
+export {
+  adminFee,
+  formatRupiah,
+  getSubscriptionPlan,
+  mapPackageToPlan,
+};
 export default useSubscriptionPlans;

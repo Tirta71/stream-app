@@ -27,4 +27,26 @@ const googleLoginSchema = z.object({
   query: z.object({}).passthrough(),
 });
 
-export { googleLoginSchema, loginSchema, registerSchema };
+const verifyEmailSchema = z.object({
+  body: z.object({}).passthrough(),
+  params: z.object({}).passthrough(),
+  query: z.object({
+    token: z.string().min(1),
+  }),
+});
+
+const resendVerificationSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+  }),
+  params: z.object({}).passthrough(),
+  query: z.object({}).passthrough(),
+});
+
+export {
+  googleLoginSchema,
+  loginSchema,
+  registerSchema,
+  resendVerificationSchema,
+  verifyEmailSchema,
+};

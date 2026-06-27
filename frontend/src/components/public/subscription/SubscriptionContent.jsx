@@ -1,5 +1,6 @@
 import Footer from "../layout/Footer.jsx";
 import Navbar from "../layout/Navbar.jsx";
+import PageMessage from "../ui/PageMessage.jsx";
 import PageTransition from "../ui/PageTransition.jsx";
 import SubscriptionPackageCard from "./SubscriptionPackageCard.jsx";
 
@@ -102,7 +103,7 @@ const benefits = [
   },
 ];
 
-function SubscriptionContent({ plans }) {
+function SubscriptionContent({ error, isLoading, plans }) {
   return (
     <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
       <Navbar />
@@ -137,15 +138,30 @@ function SubscriptionContent({ plans }) {
             Temukan paket sesuai kebutuhanmu!
           </p>
 
-          <div className="mx-auto mt-10 flex max-w-[936px] justify-between gap-12 max-[900px]:gap-7 max-[760px]:flex-col max-[760px]:items-center max-[640px]:mt-10 max-[640px]:gap-8">
-            {plans.map((plan) => (
-              <SubscriptionPackageCard
-                key={plan.id}
-                actionTo={`/pembayaran?paket=${plan.id}`}
-                plan={plan}
-              />
-            ))}
-          </div>
+          {error ? (
+            <PageMessage
+              className="mx-auto mt-8 max-w-xl"
+              message={error}
+              variant="danger"
+            />
+          ) : null}
+
+          {isLoading && !plans.length ? (
+            <PageMessage
+              className="mx-auto mt-8 max-w-xl"
+              message="Memuat paket langganan..."
+            />
+          ) : (
+            <div className="mx-auto mt-10 flex max-w-[936px] justify-between gap-12 max-[900px]:gap-7 max-[760px]:flex-col max-[760px]:items-center max-[640px]:mt-10 max-[640px]:gap-8">
+              {plans.map((plan) => (
+                <SubscriptionPackageCard
+                  key={plan.id}
+                  actionTo={`/pembayaran?paket=${plan.id}`}
+                  plan={plan}
+                />
+              ))}
+            </div>
+          )}
         </section>
       </PageTransition>
       <Footer />

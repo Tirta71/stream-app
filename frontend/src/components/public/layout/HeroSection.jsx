@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "motion/react";
+import { useNavigate } from "react-router-dom";
 
 function SoundButton({ className = "", iconClassName = "" }) {
   return (
@@ -64,9 +65,11 @@ const heroClassNames = {
 function HeroSection({
   movie,
   fallbackImage = "",
+  onStart,
   onShowDetail,
   variant = "default",
 }) {
+  const navigate = useNavigate();
   const classes = heroClassNames[variant] || heroClassNames.default;
   const imageUrl = movie.image || fallbackImage;
   const shouldReduceMotion = useReducedMotion();
@@ -102,6 +105,16 @@ function HeroSection({
   const handleImageError = (event) => {
     if (fallbackImage && event.currentTarget.src !== fallbackImage) {
       event.currentTarget.src = fallbackImage;
+    }
+  };
+  const handleStart = () => {
+    if (onStart) {
+      onStart();
+      return;
+    }
+
+    if (movie?.detail?.id) {
+      navigate(`/watch/${movie.detail.id}`);
     }
   };
 
@@ -146,6 +159,7 @@ function HeroSection({
           <button
             type="button"
             className="min-h-[45px] min-w-[93px] rounded-full border-0 bg-[#0f1e93] px-[26px] py-2.5 font-bold text-white hover:bg-[#1728b8] max-[760px]:min-h-[25px] max-[760px]:min-w-[55px] max-[760px]:px-3 max-[760px]:py-1 max-[760px]:text-xs"
+            onClick={handleStart}
           >
             Mulai
           </button>

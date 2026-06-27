@@ -9,6 +9,10 @@ const defaultErrorCodes = {
 };
 
 const getStatusCode = (error) => {
+  if (error.name === "MulterError") {
+    return 422;
+  }
+
   const statusCode = Number(error.statusCode);
 
   if (Number.isInteger(statusCode) && statusCode >= 400 && statusCode <= 599) {
@@ -19,9 +23,15 @@ const getStatusCode = (error) => {
 };
 
 const getErrorCode = (error, statusCode) =>
-  error.code || defaultErrorCodes[statusCode] || "INTERNAL_SERVER_ERROR";
+  error.name === "MulterError"
+    ? "UPLOAD_VALIDATION_ERROR"
+    : error.code || defaultErrorCodes[statusCode] || "INTERNAL_SERVER_ERROR";
 
 const getErrorMessage = (error, statusCode) => {
+  if (error.name === "MulterError" && error.code === "LIMIT_FILE_SIZE") {
+    return "Ukuran foto maksimal 2MB";
+  }
+
   if (statusCode === 500 && !error.isOperational) {
     return "Internal server error";
   }

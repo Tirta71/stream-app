@@ -10,19 +10,20 @@ import AuthSessionProvider from "./components/public/auth/AuthSessionProvider.js
 import GuestRoute from "./components/public/auth/GuestRoute.jsx";
 import ProtectedRoute from "./components/public/auth/ProtectedRoute.jsx";
 import LoadingScreen from "./components/public/layout/LoadingScreen.jsx";
-import { heroMovie } from "./data/movies.js";
 import ManageMovies from "./pages/admin/ManageMovies.jsx";
-import GoogleAuthCallback from "./pages/public/GoogleAuthCallback.jsx";
-import Home from "./pages/public/Home.jsx";
-import Login from "./pages/public/Login.jsx";
-import Movie from "./pages/public/Movie.jsx";
-import MyList from "./pages/public/MyList.jsx";
-import Payment from "./pages/public/Payment.jsx";
-import PaymentPending from "./pages/public/PaymentPending.jsx";
-import Profile from "./pages/public/Profile.jsx";
-import Register from "./pages/public/Register.jsx";
-import Series from "./pages/public/Series.jsx";
-import Subscription from "./pages/public/Subscription.jsx";
+import GoogleAuthCallback from "./pages/public/auth/GoogleAuthCallback.jsx";
+import Login from "./pages/public/auth/Login.jsx";
+import Register from "./pages/public/auth/Register.jsx";
+import VerifyEmail from "./pages/public/auth/VerifyEmail.jsx";
+import Home from "./pages/public/home/Home.jsx";
+import Movie from "./pages/public/content/Movie.jsx";
+import MyList from "./pages/public/myList/MyList.jsx";
+import Payment from "./pages/public/payment/Payment.jsx";
+import PaymentPending from "./pages/public/payment/PaymentPending.jsx";
+import Profile from "./pages/public/profile/Profile.jsx";
+import Series from "./pages/public/content/Series.jsx";
+import Subscription from "./pages/public/subscription/Subscription.jsx";
+import Watch from "./pages/public/watch/Watch.jsx";
 
 const initialLoadingDuration = 1600;
 
@@ -43,7 +44,7 @@ function AppRoutes() {
         path="/"
         element={
           <ProtectedRoute>
-            <Home heroMovie={heroMovie} />
+            <Home />
           </ProtectedRoute>
         }
       />
@@ -62,6 +63,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Series />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/watch/:id"
+        element={
+          <ProtectedRoute>
+            <Watch />
           </ProtectedRoute>
         }
       />
@@ -122,6 +131,7 @@ function AppRoutes() {
         }
       />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+      <Route path="/auth/verifikasi-email" element={<VerifyEmail />} />
       <Route
         path="/admin/movies"
         element={

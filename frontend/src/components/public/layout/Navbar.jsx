@@ -3,10 +3,8 @@ import { Link, NavLink } from "react-router-dom";
 import logo from "../../../assets/img/logo/Logo.png";
 import logoMobile from "../../../assets/img/logo/logo_mobile.png";
 import { useAuthSession } from "../../../hooks/public/useAuthSession.js";
+import { getProfilePhotoUrl } from "../../../utils/profile.js";
 import GenreDropdown from "../ui/GenreDropdown.jsx";
-
-const profileAvatarUrl =
-  "https://api.dicebear.com/9.x/adventurer/svg?seed=ChillProfile";
 
 const getNavLinkClassName = ({ isActive }) =>
   [
@@ -21,7 +19,8 @@ function Navbar({
   showGenreMenu = false,
 }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const { logout } = useAuthSession();
+  const { logout, user } = useAuthSession();
+  const profileAvatarUrl = getProfilePhotoUrl(user);
   const navbarRef = useRef(null);
 
   useEffect(() => {

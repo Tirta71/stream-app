@@ -1,5 +1,5 @@
-import SeriesContent from "../../components/public/series/SeriesContent.jsx";
-import useSeriesMovies from "../../hooks/public/useSeriesMovies.js";
+import SeriesContent from "../../../components/public/series/SeriesContent.jsx";
+import useSeriesMovies from "../../../hooks/public/useSeriesMovies.js";
 
 function Series() {
   const {

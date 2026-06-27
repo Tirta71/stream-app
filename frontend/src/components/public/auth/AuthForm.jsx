@@ -68,6 +68,7 @@ function AuthForm({
   onChange,
   onGoogleLogin,
   onSubmit,
+  successMessage,
   values = {},
   compact = false,
 }) {
@@ -95,6 +96,12 @@ function AuthForm({
       {error ? (
         <div className="rounded-xl border border-[#ff7775]/30 bg-[#b71f1d]/20 px-4 py-3 text-sm font-semibold text-[#ffb1af] max-[640px]:text-xs">
           {error}
+        </div>
+      ) : null}
+
+      {successMessage ? (
+        <div className="rounded-xl border border-[#4dd889]/30 bg-[#0e7a3c]/20 px-4 py-3 text-sm font-semibold text-[#a7f3c6] max-[640px]:text-xs">
+          {successMessage}
         </div>
       ) : null}
 

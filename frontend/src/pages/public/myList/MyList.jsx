@@ -1,29 +1,34 @@
-import HomeContent from "../../components/public/home/HomeContent.jsx";
-import useHomeMovies from "../../hooks/public/useHomeMovies.js";
+import MyListContent from "../../../components/public/myList/MyListContent.jsx";
+import useMyListMovies from "../../../hooks/public/useMyListMovies.js";
 
-function Home({ heroMovie }) {
+function MyList() {
   const {
     closeMovieDetail,
     closeSeriesDetail,
+    isLoading,
+    moviesError,
+    moviesStatus,
+    myListMovies,
     selectedMovieDetail,
     selectedSeriesDetail,
     showMovieDetail,
     showSeriesDetail,
-    visibleSections,
-  } = useHomeMovies();
+  } = useMyListMovies();
 
   return (
-    <HomeContent
-      heroMovie={heroMovie}
+    <MyListContent
+      error={moviesError}
+      isLoading={isLoading}
+      movies={myListMovies}
       onCloseMovieDetail={closeMovieDetail}
       onCloseSeriesDetail={closeSeriesDetail}
       onShowMovieDetail={showMovieDetail}
       onShowSeriesDetail={showSeriesDetail}
-      sections={visibleSections}
       selectedMovieDetail={selectedMovieDetail}
       selectedSeriesDetail={selectedSeriesDetail}
+      status={moviesStatus}
     />
   );
 }
 
-export default Home;
+export default MyList;

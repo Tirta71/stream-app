@@ -33,13 +33,19 @@ const clearAuthCookie = (res) => {
 
 const register = asyncHandler(async (req, res) => {
   const result = await authService.register(req.validated.body);
-  setAuthCookie(res, result.token);
+
+  if (result.token) {
+    setAuthCookie(res, result.token);
+  }
 
   sendResponse(res, {
     data: {
+      requiresEmailVerification: Boolean(result.requiresEmailVerification),
       user: result.user,
     },
-    message: "Register berhasil",
+    message: result.requiresEmailVerification
+      ? "Pendaftaran berhasil. Kami telah mengirim tautan verifikasi ke email Anda."
+      : "Pendaftaran berhasil",
     statusCode: 201,
   });
 });
@@ -58,13 +64,19 @@ const login = asyncHandler(async (req, res) => {
 
 const googleLogin = asyncHandler(async (req, res) => {
   const result = await authService.loginWithGoogle(req.validated.body);
-  setAuthCookie(res, result.token);
+
+  if (result.token) {
+    setAuthCookie(res, result.token);
+  }
 
   sendResponse(res, {
     data: {
+      requiresEmailVerification: Boolean(result.requiresEmailVerification),
       user: result.user,
     },
-    message: "Login Google berhasil",
+    message: result.requiresEmailVerification
+      ? "Login Google berhasil. Kami telah mengirim tautan verifikasi ke email Anda."
+      : "Login Google berhasil",
   });
 });
 
@@ -95,6 +107,17 @@ const googleCallback = async (req, res) => {
     }
 
     const result = await authService.loginWithGoogleCode({ code });
+
+    if (result.requiresEmailVerification) {
+      res.redirect(
+        buildGoogleCallbackUrl({
+          email: result.user.email,
+          verification: "required",
+        }),
+      );
+      return;
+    }
+
     setAuthCookie(res, result.token);
 
     res.redirect(
@@ -119,6 +142,33 @@ const me = asyncHandler(async (req, res) => {
   });
 });
 
+const verifyEmail = asyncHandler(async (req, res) => {
+  const result = await authService.verifyEmail(req.validated.query);
+
+  if (result.token) {
+    setAuthCookie(res, result.token);
+  }
+
+  sendResponse(res, {
+    data: {
+      user: result.user,
+    },
+    message: "Email berhasil diverifikasi. Anda akan dialihkan ke halaman utama.",
+  });
+});
+
+const resendVerification = asyncHandler(async (req, res) => {
+  const result = await authService.resendVerification(req.validated.body);
+
+  sendResponse(res, {
+    data: {
+      emailVerificationExpiresAt: result.emailVerificationExpiresAt ?? null,
+      user: result.user ?? null,
+    },
+    message: result.message,
+  });
+});
+
 const logout = asyncHandler(async (_req, res) => {
   clearAuthCookie(res);
 
@@ -135,4 +185,6 @@ export default {
   me,
   redirectToGoogle,
   register,
+  resendVerification,
+  verifyEmail,
 };

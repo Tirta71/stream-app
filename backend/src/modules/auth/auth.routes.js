@@ -6,12 +6,24 @@ import {
   googleLoginSchema,
   loginSchema,
   registerSchema,
+  resendVerificationSchema,
+  verifyEmailSchema,
 } from "./auth.validation.js";
 
 const router = Router();
 
 router.post("/register", validate(registerSchema), authController.register);
 router.post("/login", validate(loginSchema), authController.login);
+router.post(
+  "/resend-verification",
+  validate(resendVerificationSchema),
+  authController.resendVerification,
+);
+router.get(
+  "/verifikasi-email",
+  validate(verifyEmailSchema),
+  authController.verifyEmail,
+);
 router.get("/me", authMiddleware, authController.me);
 router.post("/logout", authController.logout);
 router.get("/google", authController.redirectToGoogle);

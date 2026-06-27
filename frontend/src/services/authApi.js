@@ -35,6 +35,20 @@ async function register(payload) {
   return response.data.data;
 }
 
+async function resendVerification(payload) {
+  const response = await authApi.post("/auth/resend-verification", payload);
+
+  return response.data;
+}
+
+async function verifyEmail(token) {
+  const response = await authApi.get("/auth/verifikasi-email", {
+    params: { token },
+  });
+
+  return response.data.data;
+}
+
 async function loginWithGoogle(payload) {
   const response = await authApi.post("/auth/google", payload);
 
@@ -66,4 +80,6 @@ export {
   loginWithGoogle,
   logout,
   register,
+  resendVerification,
+  verifyEmail,
 };

@@ -1,72 +1,52 @@
 import { useState } from "react";
 
 const emptyForm = {
-  slug: "",
-  type: "movie",
-  section: "",
-  sectionTitle: "",
-  title: "",
-  image: "",
-  rating: "",
+  ageRating: "13+",
   badge: "",
   description: "",
+  image: "",
+  isActive: true,
+  isPremium: false,
+  isTrending: false,
   previewImage: "",
-  ageRating: "13+",
-  episodeCount: "",
-  duration: "",
-  episodeTitle: "",
-  genres: "",
-  progress: 0,
-  previewType: "movie",
+  publishedAt: "",
+  rating: "",
+  releaseYear: "",
+  section: "newReleases",
+  slug: "",
+  title: "",
   top: false,
+  trailerUrl: "",
+  type: "movie",
 };
-
-const episodeCountOptions = [
-  "",
-  "Movie",
-  "1 Episode",
-  "6 Episode",
-  "8 Episode",
-  "10 Episode",
-  "12 Episode",
-  "16 Episode",
-  "24 Episode",
-];
 
 const sectionOptions = [
   {
+    section: "premiumContents",
     titleByType: {
-      movie: "Melanjutkan Tonton Film",
-      series: "Melanjutkan Tonton Series",
+      movie: "Film Persembahan Chill",
+      series: "Series Persembahan Chill",
     },
-    section: "continueWatching",
   },
   {
-    titleByType: {
-      movie: "Top Rating Film dan Series Hari ini",
-      series: "Top Rating Series Hari ini",
-    },
     section: "topRatedMovies",
+    titleByType: {
+      movie: "Top Rating Film",
+      series: "Top Rating Series",
+    },
   },
   {
+    section: "trendingMovies",
     titleByType: {
       movie: "Film Trending",
       series: "Series Trending",
     },
-    section: "trendingMovies",
   },
   {
+    section: "newReleases",
     titleByType: {
       movie: "Rilis Baru",
       series: "Rilis Baru",
-    },
-    section: "newReleases",
-  },
-  {
-    onlyForType: "series",
-    section: "seriesFeatured",
-    titleByType: {
-      series: "Series Persembahan Chill",
     },
   },
 ];
@@ -76,20 +56,53 @@ const typeOptions = [
   { label: "Series", value: "series" },
 ];
 
-function getMovieGenres(movie) {
-  if (typeof movie?.genres === "string") {
-    return movie.genres;
+function getBooleanField(movie, camelKey, snakeKey, fallbackValue = false) {
+  const value = movie?.[camelKey] ?? movie?.[snakeKey];
+
+  if (value === undefined || value === null) {
+    return fallbackValue;
   }
 
-  if (Array.isArray(movie?.genres)) {
-    return movie.genres.join(", ");
+  return value === true || value === "true";
+}
+
+function getMovieType(movie) {
+  const type = String(movie?.type || "").toLowerCase();
+
+  return type === "series" ? "series" : "movie";
+}
+
+function getDerivedSection(movie) {
+  if (getBooleanField(movie, "isPremium", "is_premium")) {
+    return "premiumContents";
   }
 
-  if (movie?.genre) {
-    return movie.genre;
+  if (getBooleanField(movie, "isTrending", "is_trending")) {
+    return "trendingMovies";
   }
 
-  return movie?.hoverPreview?.genres?.join(", ") ?? "";
+  if (
+    getBooleanField(movie, "isTopTen", "is_top_ten") ||
+    Number(movie?.rating) >= 4
+  ) {
+    return "topRatedMovies";
+  }
+
+  return "newReleases";
+}
+
+function getDateInputValue(value) {
+  if (!value) {
+    return "";
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  return parsedDate.toISOString().slice(0, 10);
 }
 
 function getFormState(movie) {
@@ -97,29 +110,28 @@ function getFormState(movie) {
     return emptyForm;
   }
 
+  const isPremium = getBooleanField(movie, "isPremium", "is_premium");
+  const isTrending = getBooleanField(movie, "isTrending", "is_trending");
+  const isTopTen = getBooleanField(movie, "isTopTen", "is_top_ten");
+
   return {
-    slug: movie.slug ?? "",
-    type: movie.type ?? (movie.previewType === "series" ? "series" : "movie"),
-    section: movie.section ?? movie.category ?? "",
-    sectionTitle: movie.sectionTitle ?? "",
-    title: movie.title ?? "",
-    image: movie.image ?? "",
-    rating: movie.rating ?? "",
+    ageRating: movie.ageRating ?? movie.age_rating ?? "13+",
     badge: movie.badge ?? "",
     description: movie.description ?? "",
-    previewImage:
-      movie.previewImage ??
-      movie.hoverPreview?.previewImage ??
-      movie.image ??
-      "",
-    ageRating: movie.ageRating ?? movie.hoverPreview?.ageRating ?? "13+",
-    episodeCount: movie.episodeCount ?? movie.hoverPreview?.episodeCount ?? "",
-    duration: movie.duration ?? movie.hoverPreview?.duration ?? "",
-    episodeTitle: movie.episodeTitle ?? movie.hoverPreview?.episodeTitle ?? "",
-    genres: getMovieGenres(movie),
-    progress: movie.progress ?? movie.hoverPreview?.progress ?? 0,
-    previewType: movie.previewType ?? movie.hoverPreview?.type ?? "movie",
-    top: Boolean(movie.top),
+    image: movie.image ?? "",
+    isActive: getBooleanField(movie, "isActive", "is_active", true),
+    isPremium,
+    isTrending,
+    previewImage: movie.previewImage ?? movie.preview_image ?? movie.image ?? "",
+    publishedAt: getDateInputValue(movie.publishedAt ?? movie.published_at),
+    rating: String(movie.rating ?? ""),
+    releaseYear: String(movie.releaseYear ?? movie.release_year ?? ""),
+    section: getDerivedSection(movie),
+    slug: movie.slug ?? "",
+    title: movie.title ?? "",
+    top: Boolean(movie.top || isTopTen),
+    trailerUrl: movie.trailerUrl ?? movie.trailer_url ?? "",
+    type: getMovieType(movie),
   };
 }
 
@@ -132,25 +144,14 @@ function MovieFormField({ label, children }) {
   );
 }
 
-function getSectionOption(section) {
-  return sectionOptions.find((option) => option.section === section);
-}
-
 function getSectionTitle(option, type) {
   return option?.titleByType?.[type] ?? "";
-}
-
-function getVisibleSectionOptions(type) {
-  return sectionOptions.filter(
-    (option) => !option.onlyForType || option.onlyForType === type,
-  );
 }
 
 function MovieForm({
   onSubmit,
   editingMovie,
   defaultSection = "",
-  defaultSectionTitle = "",
   isSubmitting = false,
   onCancel,
 }) {
@@ -159,58 +160,20 @@ function MovieForm({
 
     return {
       ...initialForm,
-      section: initialForm.section || defaultSection,
-      sectionTitle: initialForm.sectionTitle || defaultSectionTitle,
+      section: initialForm.section || defaultSection || "newReleases",
     };
   });
   const isEditing = Boolean(editingMovie);
-  const visibleSectionOptions = getVisibleSectionOptions(formData.type);
 
   const handleInputChange = (event) => {
     const { checked, name, type, value } = event.target;
 
-    if (name === "type") {
-      const nextSectionOptions = getVisibleSectionOptions(value);
-      const isCurrentSectionValid = nextSectionOptions.some(
-        (option) => option.section === formData.section,
-      );
-      const selectedSection = isCurrentSectionValid
-        ? getSectionOption(formData.section)
-        : nextSectionOptions[0];
-      const nextSection = selectedSection?.section ?? "";
-
-      setFormData((currentData) => ({
-        ...currentData,
-        type: value,
-        section: nextSection,
-        sectionTitle: getSectionTitle(selectedSection, value),
-        episodeCount:
-          value === "series" && currentData.episodeCount === "Movie"
-            ? "16 Episode"
-            : currentData.episodeCount,
-        previewType:
-          nextSection === "continueWatching"
-            ? "continue"
-            : value === "series"
-              ? "series"
-              : "movie",
-      }));
-      return;
-    }
-
     if (name === "section") {
-      const selectedSection = getSectionOption(value);
-
       setFormData((currentData) => ({
         ...currentData,
+        isPremium: value === "premiumContents" ? true : currentData.isPremium,
+        isTrending: value === "trendingMovies" ? true : currentData.isTrending,
         section: value,
-        sectionTitle: getSectionTitle(selectedSection, currentData.type),
-        previewType:
-          value === "continueWatching"
-            ? "continue"
-            : currentData.type === "series"
-              ? "series"
-              : "movie",
       }));
       return;
     }
@@ -223,35 +186,33 @@ function MovieForm({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const progressValue = Number(formData.progress);
 
     const wasSaved = await onSubmit({
       ...editingMovie,
-      slug: formData.slug.trim(),
-      type: formData.type,
-      section: formData.section.trim(),
-      sectionTitle: formData.sectionTitle.trim(),
-      title: formData.title.trim(),
-      image: formData.image.trim(),
-      rating: formData.rating.trim(),
+      ageRating: formData.ageRating.trim(),
       badge: formData.badge.trim(),
       description: formData.description.trim(),
+      image: formData.image.trim(),
+      isActive: formData.isActive,
+      isPremium: formData.isPremium,
+      isTopTen: formData.top,
+      isTrending: formData.isTrending,
       previewImage: formData.previewImage.trim(),
-      ageRating: formData.ageRating.trim(),
-      episodeCount: formData.episodeCount.trim(),
-      duration: formData.duration.trim(),
-      episodeTitle: formData.episodeTitle.trim(),
-      genres: formData.genres.trim(),
-      progress: Number.isFinite(progressValue) ? progressValue : 0,
-      previewType: formData.previewType,
+      publishedAt: formData.publishedAt,
+      rating: formData.rating.trim(),
+      releaseYear: formData.releaseYear.trim(),
+      section: formData.section,
+      slug: formData.slug.trim(),
+      title: formData.title.trim(),
       top: formData.top,
+      trailerUrl: formData.trailerUrl.trim(),
+      type: formData.type,
     });
 
     if (!isEditing && wasSaved !== false) {
       setFormData({
         ...emptyForm,
-        section: defaultSection,
-        sectionTitle: defaultSectionTitle,
+        section: defaultSection || "newReleases",
       });
     }
   };
@@ -269,7 +230,9 @@ function MovieForm({
           {isEditing ? "Update Movie" : "Tambah Movie"}
         </h2>
         <p className="mt-2 text-sm leading-6 text-[#c1c2c4]">
-          {isEditing ? "Ubah data movie" : "Tambahkan movie baru"}
+          {isEditing
+            ? "Ubah data konten dari backend."
+            : "Tambahkan movie atau series baru ke backend."}
         </p>
       </div>
 
@@ -290,7 +253,7 @@ function MovieForm({
           </select>
         </MovieFormField>
 
-        <MovieFormField label="Section Homepage">
+        <MovieFormField label="Kategori Tampilan">
           <select
             className={inputClassName}
             name="section"
@@ -298,8 +261,7 @@ function MovieForm({
             required
             value={formData.section}
           >
-            <option value="">Pilih section homepage</option>
-            {visibleSectionOptions.map((option) => (
+            {sectionOptions.map((option) => (
               <option key={option.section} value={option.section}>
                 {getSectionTitle(option, formData.type)}
               </option>
@@ -353,13 +315,28 @@ function MovieForm({
           />
         </MovieFormField>
 
+        <MovieFormField label="Trailer URL">
+          <input
+            className={inputClassName}
+            name="trailerUrl"
+            onChange={handleInputChange}
+            placeholder="https://www.youtube.com/embed/..."
+            type="url"
+            value={formData.trailerUrl}
+          />
+        </MovieFormField>
+
         <MovieFormField label="Rating">
           <input
             className={inputClassName}
+            max="5"
+            min="0"
             name="rating"
             onChange={handleInputChange}
             placeholder="4.5"
-            type="text"
+            required
+            step="0.1"
+            type="number"
             value={formData.rating}
           />
         </MovieFormField>
@@ -369,7 +346,7 @@ function MovieForm({
             className={inputClassName}
             name="badge"
             onChange={handleInputChange}
-            placeholder="Episode Baru"
+            placeholder="Premium / Episode Baru"
             type="text"
             value={formData.badge}
           />
@@ -381,71 +358,32 @@ function MovieForm({
             name="ageRating"
             onChange={handleInputChange}
             placeholder="13+"
+            required
             type="text"
             value={formData.ageRating}
           />
         </MovieFormField>
 
-        <MovieFormField label="Preview Type">
-          <select
-            className={inputClassName}
-            name="previewType"
-            onChange={handleInputChange}
-            value={formData.previewType}
-          >
-            <option value="movie">movie</option>
-            <option value="series">series</option>
-            <option value="continue">continue</option>
-          </select>
-        </MovieFormField>
-
-        <MovieFormField label="Episode Count">
-          <select
-            className={inputClassName}
-            name="episodeCount"
-            onChange={handleInputChange}
-            value={formData.episodeCount}
-          >
-            {episodeCountOptions.map((option) => (
-              <option key={option || "empty"} value={option}>
-                {option || "Pilih episode count"}
-              </option>
-            ))}
-          </select>
-        </MovieFormField>
-
-        <MovieFormField label="Duration">
+        <MovieFormField label="Release Year">
           <input
             className={inputClassName}
-            name="duration"
+            max="2100"
+            min="1900"
+            name="releaseYear"
             onChange={handleInputChange}
-            placeholder="2j 33m"
-            type="text"
-            value={formData.duration}
-          />
-        </MovieFormField>
-
-        <MovieFormField label="Episode Title">
-          <input
-            className={inputClassName}
-            name="episodeTitle"
-            onChange={handleInputChange}
-            placeholder='"Episode 1"'
-            type="text"
-            value={formData.episodeTitle}
-          />
-        </MovieFormField>
-
-        <MovieFormField label="Progress">
-          <input
-            className={inputClassName}
-            max="100"
-            min="0"
-            name="progress"
-            onChange={handleInputChange}
-            placeholder="35"
+            placeholder="2026"
             type="number"
-            value={formData.progress}
+            value={formData.releaseYear}
+          />
+        </MovieFormField>
+
+        <MovieFormField label="Published At">
+          <input
+            className={inputClassName}
+            name="publishedAt"
+            onChange={handleInputChange}
+            type="date"
+            value={formData.publishedAt}
           />
         </MovieFormField>
 
@@ -459,19 +397,39 @@ function MovieForm({
           />
           Top 10
         </label>
-      </div>
 
-      <div className="mt-4">
-        <MovieFormField label="Genres">
+        <label className="flex min-h-11 items-center gap-3 self-end rounded-lg border border-white/10 bg-[#202326] px-4 text-sm font-semibold text-white">
           <input
-            className={inputClassName}
-            name="genres"
+            checked={formData.isTrending}
+            className="h-4 w-4 accent-[#3254ff]"
+            name="isTrending"
             onChange={handleInputChange}
-            placeholder="Drama, Komedi, Romantis"
-            type="text"
-            value={formData.genres}
+            type="checkbox"
           />
-        </MovieFormField>
+          Trending
+        </label>
+
+        <label className="flex min-h-11 items-center gap-3 self-end rounded-lg border border-white/10 bg-[#202326] px-4 text-sm font-semibold text-white">
+          <input
+            checked={formData.isPremium}
+            className="h-4 w-4 accent-[#3254ff]"
+            name="isPremium"
+            onChange={handleInputChange}
+            type="checkbox"
+          />
+          Premium
+        </label>
+
+        <label className="flex min-h-11 items-center gap-3 self-end rounded-lg border border-white/10 bg-[#202326] px-4 text-sm font-semibold text-white">
+          <input
+            checked={formData.isActive}
+            className="h-4 w-4 accent-[#3254ff]"
+            name="isActive"
+            onChange={handleInputChange}
+            type="checkbox"
+          />
+          Aktif
+        </label>
       </div>
 
       <div className="mt-4">
@@ -481,6 +439,7 @@ function MovieForm({
             name="description"
             onChange={handleInputChange}
             placeholder="Deskripsi singkat movie"
+            required
             value={formData.description}
           />
         </MovieFormField>

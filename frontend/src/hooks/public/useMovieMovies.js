@@ -20,6 +20,7 @@ import {
   sortByPublishedDesc,
   sortByRatingDesc,
 } from "../../utils/movieMapper.js";
+import useCurrentSubscription from "./useCurrentSubscription.js";
 
 const movieHeroFallback = {
   title: "Avatar: The Way of Water",
@@ -37,11 +38,7 @@ const movieSectionConfigs = [
     variant: "landscape",
   },
   {
-    getItems: ({ movieItems }) => {
-      const premiumMovies = movieItems.filter(isPremiumMovie);
-
-      return premiumMovies.length ? premiumMovies : movieItems;
-    },
+    getItems: ({ movieItems }) => movieItems.filter(isPremiumMovie),
     key: "movieFeatured",
     title: "Film Persembahan Chill",
   },
@@ -106,6 +103,7 @@ function useMovieMovies() {
   const movies = useSelector(selectMovies);
   const moviesStatus = useSelector(selectMoviesStatus);
   const watchProgress = useSelector(selectWatchProgress);
+  const { isSubscribed } = useCurrentSubscription();
   const [selectedGenre, setSelectedGenre] = useState("");
   const [selectedMovieDetail, setSelectedMovieDetail] = useState(null);
 
@@ -116,8 +114,14 @@ function useMovieMovies() {
   }, [dispatch, moviesStatus]);
 
   const movieItems = useMemo(
-    () => movies.filter((movie) => isActiveMovie(movie) && isMovie(movie)),
-    [movies],
+    () =>
+      movies.filter(
+        (movie) =>
+          isActiveMovie(movie) &&
+          isMovie(movie) &&
+          (isSubscribed || !isPremiumMovie(movie)),
+      ),
+    [isSubscribed, movies],
   );
 
   const genreOptions = useMemo(() => {

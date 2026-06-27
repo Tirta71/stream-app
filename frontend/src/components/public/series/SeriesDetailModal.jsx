@@ -1,16 +1,27 @@
 import { useEffect } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { Link } from "react-router-dom";
+import useMyListToggle from "../../../hooks/public/useMyListToggle.js";
 import { replaceBrokenImage } from "../../../utils/imageFallback.js";
+import MyListIcon from "../ui/MyListIcon.jsx";
 
-function ModalIconButton({ children, className = "", label, onClick }) {
+function ModalIconButton({
+  children,
+  className = "",
+  disabled = false,
+  label,
+  onClick,
+}) {
   return (
     <button
       type="button"
       aria-label={label}
       className={[
-        "grid place-items-center rounded-full border border-white/40 text-white transition-[border-color,background,transform] duration-150 hover:border-white/70 hover:bg-white/10 hover:scale-105",
+        "grid place-items-center rounded-full border border-white/40 text-white transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-200 ease-out hover:scale-105 hover:border-white/70 hover:bg-white/10",
+        disabled ? "cursor-wait opacity-70 hover:scale-100" : "",
         className,
       ].join(" ")}
+      disabled={disabled}
       onClick={onClick}
     >
       {children}
@@ -81,6 +92,11 @@ function EpisodeRow({ episode, isActive }) {
 function SeriesDetailModal({ detail, onClose }) {
   const shouldReduceMotion = useReducedMotion();
   const episodes = detail?.episodes ?? [];
+  const {
+    isInMyList,
+    isSaving: isMyListSaving,
+    toggleMyList,
+  } = useMyListToggle(detail?.id);
   const metaItems = [
     detail?.releaseYear,
     detail?.episodeCount,
@@ -186,24 +202,31 @@ function SeriesDetailModal({ detail, onClose }) {
               {detail.title}
             </h2>
             <div className="mt-5 flex items-center gap-3 max-[640px]:mt-3 max-[640px]:gap-2">
-              <button
-                type="button"
-                className="min-h-[39px] min-w-[86px] rounded-full bg-[#0f1e93] px-6 py-2 text-sm font-bold text-white transition-colors hover:bg-[#1728b8] max-[640px]:min-h-[30px] max-[640px]:min-w-[67px] max-[640px]:px-4 max-[640px]:py-1 max-[640px]:text-xs"
+              <Link
+                className="inline-flex min-h-[39px] min-w-[86px] items-center justify-center rounded-full bg-[#0f1e93] px-6 py-2 text-sm font-bold text-white transition-colors hover:bg-[#1728b8] max-[640px]:min-h-[30px] max-[640px]:min-w-[67px] max-[640px]:px-4 max-[640px]:py-1 max-[640px]:text-xs"
+                to={`/watch/${detail.id}`}
               >
                 Mulai
-              </button>
+              </Link>
               <ModalIconButton
-                label="Tambahkan ke daftar"
-                className="h-10 w-10 max-[640px]:h-[30px] max-[640px]:w-[30px]"
+                label={
+                  isInMyList
+                    ? "Hapus dari daftar saya"
+                    : "Tambahkan ke daftar saya"
+                }
+                className={[
+                  "h-10 w-10 max-[640px]:h-[30px] max-[640px]:w-[30px]",
+                  isInMyList
+                    ? "border-white bg-white text-[#181a1c] shadow-[0_8px_20px_rgba(255,255,255,0.16)] hover:bg-white hover:text-[#181a1c]"
+                    : "",
+                ].join(" ")}
+                disabled={isMyListSaving}
+                onClick={toggleMyList}
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-5 w-5 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2] max-[640px]:h-4 max-[640px]:w-4"
-                >
-                  <path d="M12 5v14" />
-                  <path d="M5 12h14" />
-                </svg>
+                <MyListIcon
+                  className="h-5 w-5 max-[640px]:h-4 max-[640px]:w-4"
+                  isSaved={isInMyList}
+                />
               </ModalIconButton>
               <ModalIconButton
                 label="Matikan suara"

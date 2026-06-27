@@ -12,10 +12,14 @@ import {
   getMovieType,
   getMoviesWithProgress,
   isActiveMovie,
+  isPremiumMovie,
   isTrendingMovie,
+  mapApiMovieToMovieDetail,
+  mapApiMovieToSeriesDetail,
   sortByPublishedDesc,
   sortByRatingDesc,
 } from "../../utils/movieMapper.js";
+import useCurrentSubscription from "./useCurrentSubscription.js";
 
 const homeSectionConfigs = [
   {
@@ -47,11 +51,47 @@ const homeSectionConfigs = [
   },
 ];
 
+const homeHeroFallback = {
+  description: "Temukan film dan series pilihan yang siap kamu tonton hari ini.",
+  image: "",
+  title: "CHILL",
+};
+
+function getHeroImage(movie) {
+  return movie?.preview_image || movie?.previewImage || movie?.image;
+}
+
+function mapHomeHeroMovie(movie) {
+  if (!movie) {
+    return {
+      ...homeHeroFallback,
+      detail: null,
+      fallbackImage: "",
+      type: "movie",
+    };
+  }
+
+  const type = getMovieType(movie) === "series" ? "series" : "movie";
+
+  return {
+    description: movie.description || homeHeroFallback.description,
+    detail:
+      type === "series"
+        ? mapApiMovieToSeriesDetail(movie)
+        : mapApiMovieToMovieDetail(movie),
+    fallbackImage: getHeroImage(movie) || "",
+    image: getHeroImage(movie) || "",
+    title: movie.title || homeHeroFallback.title,
+    type,
+  };
+}
+
 function useHomeMovies() {
   const dispatch = useDispatch();
   const movies = useSelector(selectMovies);
   const moviesStatus = useSelector(selectMoviesStatus);
   const watchProgress = useSelector(selectWatchProgress);
+  const { isSubscribed } = useCurrentSubscription();
   const [selectedMovieDetail, setSelectedMovieDetail] = useState(null);
   const [selectedSeriesDetail, setSelectedSeriesDetail] = useState(null);
 
@@ -62,8 +102,12 @@ function useHomeMovies() {
   }, [dispatch, moviesStatus]);
 
   const activeMovies = useMemo(
-    () => movies.filter(isActiveMovie),
-    [movies],
+    () =>
+      movies.filter(
+        (movie) =>
+          isActiveMovie(movie) && (isSubscribed || !isPremiumMovie(movie)),
+      ),
+    [isSubscribed, movies],
   );
 
   const visibleSections = useMemo(() => {
@@ -74,13 +118,41 @@ function useHomeMovies() {
       continueMovies,
     });
   }, [activeMovies, watchProgress]);
+  const heroMovie = useMemo(() => {
+    const heroSource =
+      activeMovies.find((movie) =>
+        String(movie.title ?? "").toLowerCase().includes("duty after school"),
+      ) ??
+      activeMovies.find(isTrendingMovie) ??
+      activeMovies[0];
+
+    return mapHomeHeroMovie(heroSource);
+  }, [activeMovies]);
+
+  const showHeroDetail = () => {
+    if (!heroMovie.detail) {
+      return;
+    }
+
+    if (heroMovie.type === "series") {
+      setSelectedSeriesDetail(heroMovie.detail);
+      return;
+    }
+
+    setSelectedMovieDetail({
+      ...heroMovie.detail,
+      recommendations: getSimilarMovieRecommendations(heroMovie.detail, activeMovies),
+    });
+  };
 
   return {
     closeMovieDetail: () => setSelectedMovieDetail(null),
     closeSeriesDetail: () => setSelectedSeriesDetail(null),
+    heroMovie,
     moviesStatus,
     selectedMovieDetail,
     selectedSeriesDetail,
+    showHeroDetail,
     showMovieDetail: (detail) => {
       if (detail) {
         setSelectedMovieDetail({

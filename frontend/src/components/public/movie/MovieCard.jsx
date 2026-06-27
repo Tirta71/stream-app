@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 import { motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
+import useMyListToggle from "../../../hooks/public/useMyListToggle.js";
 import { replaceBrokenImage } from "../../../utils/imageFallback.js";
 import MovieHoverPreview from "./MovieHoverPreview.jsx";
 
@@ -24,8 +26,14 @@ function MovieCard({
   onShowSeriesDetail,
   size = "default",
 }) {
+  const navigate = useNavigate();
   const cardRef = useRef(null);
   const [hoverLeftOffset, setHoverLeftOffset] = useState(null);
+  const {
+    isInMyList,
+    isSaving: isMyListSaving,
+    toggleMyList,
+  } = useMyListToggle(detail?.id);
   const isLandscape = variant === "landscape";
   const isCompact = size === "compact";
   const hasHoverPreview = Boolean(hoverPreview);
@@ -84,6 +92,11 @@ function MovieCard({
 
     if (hoverPreview?.contentType === "movie" && detail) {
       onShowMovieDetail?.(detail);
+    }
+  };
+  const handlePlay = () => {
+    if (detail?.id) {
+      navigate(`/watch/${detail.id}`);
     }
   };
   const handleCardClick = (event) => {
@@ -166,7 +179,11 @@ function MovieCard({
         <MovieHoverPreview
           title={title}
           image={image}
+          isInMyList={isInMyList}
+          isMyListSaving={isMyListSaving}
           leftOffset={hoverLeftOffset}
+          onToggleMyList={toggleMyList}
+          onPlay={handlePlay}
           onShowDetail={handleShowDetail}
           placement={hoverPlacement}
           variant={variant}

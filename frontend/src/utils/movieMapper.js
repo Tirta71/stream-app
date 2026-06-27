@@ -328,10 +328,22 @@ function getProgressMovieId(watchProgress) {
   )
 }
 
+function getProgressEpisodeId(watchProgress) {
+  return watchProgress?.episode_movie_id ?? watchProgress?.episodeMovieId
+}
+
+function getProgressTimestamp(watchProgress) {
+  return getTimestamp(
+    watchProgress?.last_watched_at ?? watchProgress?.lastWatchedAt,
+  )
+}
+
 export function getMoviesWithProgress(movies, watchProgressItems = []) {
   const activeMovies = movies.filter(isActiveMovie)
 
-  return watchProgressItems
+  const progressByMovieId = new Map()
+
+  watchProgressItems
     .map((watchProgress) => {
       const movieId = getProgressMovieId(watchProgress)
       const movie = activeMovies.find(
@@ -348,11 +360,24 @@ export function getMoviesWithProgress(movies, watchProgressItems = []) {
       }
     })
     .filter(Boolean)
-    .sort(
-      (firstItem, secondItem) =>
-        getTimestamp(secondItem.watchProgress?.last_watched_at) -
-        getTimestamp(firstItem.watchProgress?.last_watched_at),
-    )
+    .forEach((item) => {
+      const movieId = String(item.movie.id)
+      const currentItem = progressByMovieId.get(movieId)
+
+      if (
+        !currentItem ||
+        getProgressTimestamp(item.watchProgress) >=
+          getProgressTimestamp(currentItem.watchProgress)
+      ) {
+        progressByMovieId.set(movieId, item)
+      }
+    })
+
+  return [...progressByMovieId.values()].sort(
+    (firstItem, secondItem) =>
+      getProgressTimestamp(secondItem.watchProgress) -
+      getProgressTimestamp(firstItem.watchProgress),
+  )
 }
 
 export function mapApiMovieToRecommendation(movie) {
@@ -398,10 +423,7 @@ export function getSimilarMovieRecommendations(detail, movies, limit = 3) {
 
 export function mapApiMovieToPublicMovie(movie, options = {}) {
   const watchProgress = options.watchProgress ?? movie?.watchProgress
-  const episode = findEpisode(
-    movie,
-    watchProgress?.episode_movie_id ?? watchProgress?.episodeMovieId,
-  )
+  const episode = findEpisode(movie, getProgressEpisodeId(watchProgress))
   const previewType = getPreviewType(movie, watchProgress)
   const isContinue = previewType === 'continue'
   const contentType = getContentType(movie)

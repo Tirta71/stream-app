@@ -18,6 +18,7 @@ const sectionFilterOptions = {
   home: [
     { label: "Semua section", value: "all" },
     { label: "Melanjutkan Tonton", value: "continueWatching" },
+    { label: "Premium", value: "premiumContents" },
     { label: "Top Rating", value: "topRatedMovies" },
     { label: "Trending", value: "trendingMovies" },
     { label: "Rilis Baru", value: "newReleases" },
@@ -25,6 +26,7 @@ const sectionFilterOptions = {
   movie: [
     { label: "Semua section", value: "all" },
     { label: "Melanjutkan Tonton Film", value: "continueWatching" },
+    { label: "Film Persembahan Chill", value: "premiumContents" },
     { label: "Top Rating Film", value: "topRatedMovies" },
     { label: "Film Trending", value: "trendingMovies" },
     { label: "Rilis Baru", value: "newReleases" },
@@ -32,7 +34,7 @@ const sectionFilterOptions = {
   series: [
     { label: "Semua section", value: "all" },
     { label: "Melanjutkan Tonton Series", value: "continueWatching" },
-    { label: "Series Persembahan Chill", value: "seriesFeatured" },
+    { label: "Series Persembahan Chill", value: "premiumContents" },
     { label: "Top Rating Series", value: "topRatedMovies" },
     { label: "Series Trending", value: "trendingMovies" },
     { label: "Rilis Baru", value: "newReleases" },
@@ -70,7 +72,7 @@ function ManageMovies() {
       <AdminNavbar />
       <main className="bg-[#181a1c] px-20 py-12 max-[900px]:px-5 max-[640px]:px-4 max-[640px]:py-6">
         <AdminPageHeader
-          description="Kelola data movie dan section homepage langsung dari form."
+          description="Kelola data movie dan series dari backend."
           title="Manage Movies"
         />
 
@@ -92,7 +94,7 @@ function ManageMovies() {
                   Data Movie
                 </h2>
                 <p className="mt-1 text-sm text-[#c1c2c4]">
-                  Kelola data berdasarkan halaman dan section.
+                  Kelola data berdasarkan halaman dan filter tampilan.
                 </p>
               </div>
 
