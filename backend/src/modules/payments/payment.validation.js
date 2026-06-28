@@ -18,4 +18,12 @@ const paymentParamSchema = z.object({
   query: z.object({}).passthrough(),
 });
 
-export { createPaymentSchema, paymentParamSchema };
+const syncOrderPaymentSchema = z.object({
+  body: z.object({}).passthrough(),
+  params: z.object({
+    orderId: z.coerce.bigint(),
+  }),
+  query: z.object({}).passthrough(),
+});
+
+export { createPaymentSchema, paymentParamSchema, syncOrderPaymentSchema };

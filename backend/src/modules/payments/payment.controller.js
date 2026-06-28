@@ -30,8 +30,31 @@ const markAsPaid = asyncHandler(async (req, res) => {
   });
 });
 
+const handleMidtransNotification = asyncHandler(async (req, res) => {
+  const payment = await paymentService.handleMidtransNotification(req.body);
+
+  sendResponse(res, {
+    data: payment,
+    message: "Notification berhasil diproses",
+  });
+});
+
+const syncOrderStatus = asyncHandler(async (req, res) => {
+  const payment = await paymentService.syncOrderStatus(
+    req.user.id,
+    req.validated.params.orderId,
+  );
+
+  sendResponse(res, {
+    data: payment,
+    message: "Status pembayaran berhasil disinkronkan",
+  });
+});
+
 export default {
   create,
   findAll,
+  handleMidtransNotification,
   markAsPaid,
+  syncOrderStatus,
 };

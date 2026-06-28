@@ -23,6 +23,7 @@ router.get("/health", (_req, res) => {
 });
 
 router.use("/auth", authRoutes);
+router.use("/payments", paymentRoutes);
 router.use(authMiddleware);
 router.use("/users", userRoutes);
 router.use("/upload", uploadRoutes);
@@ -33,7 +34,6 @@ router.use("/my-lists", myListRoutes);
 router.use("/watch-progress", watchProgressRoutes);
 router.use("/packages", packageRoutes);
 router.use("/orders", orderRoutes);
-router.use("/payments", paymentRoutes);
 router.use("/subscriptions", subscriptionRoutes);
 
 export default router;

@@ -103,7 +103,16 @@ const benefits = [
   },
 ];
 
-function SubscriptionContent({ error, isLoading, plans }) {
+function SubscriptionContent({
+  activePackageId,
+  error,
+  isLoading,
+  plans,
+  subscriptionStatus,
+}) {
+  const isCheckingSubscription =
+    subscriptionStatus === "idle" || subscriptionStatus === "loading";
+
   return (
     <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
       <Navbar />
@@ -156,7 +165,16 @@ function SubscriptionContent({ error, isLoading, plans }) {
               {plans.map((plan) => (
                 <SubscriptionPackageCard
                   key={plan.id}
+                  actionLabel={
+                    String(plan.packageId) === String(activePackageId)
+                      ? "Berlangganan"
+                      : "Langganan"
+                  }
                   actionTo={`/pembayaran?paket=${plan.id}`}
+                  disabled={
+                    !isCheckingSubscription &&
+                    String(plan.packageId) === String(activePackageId)
+                  }
                   plan={plan}
                 />
               ))}

@@ -1,7 +1,7 @@
 # Aturan Main Project Chill App
 
 File ini wajib dibaca dulu sebelum mengerjakan perubahan baru di project ini.
-Tujuannya supaya struktur folder, alur data, dan tampilan tetap konsisten.
+Tujuannya supaya struktur folder, alur data, API, dan tampilan tetap konsisten.
 
 ## Workflow
 
@@ -9,104 +9,217 @@ Tujuannya supaya struktur folder, alur data, dan tampilan tetap konsisten.
 - Jangan menghapus atau mengembalikan perubahan yang sudah ada tanpa diminta.
 - Kalau diminta push, cek dulu perubahan yang ikut ke commit.
 - Kalau user bilang "tanpa md", jangan ikutkan file `.md` ke commit.
-- Setelah perubahan kode, jalankan `npm.cmd run lint`.
-- Untuk build, jalankan `npm.cmd run build`. Jika gagal karena izin `node_modules/.vite-temp`, ulangi dengan izin luar sandbox.
+- Setelah perubahan kode frontend, jalankan `npm.cmd run lint --prefix frontend`.
+- Untuk build frontend, jalankan `npm.cmd run build --prefix frontend`.
+- Untuk menjalankan frontend lokal, gunakan `npm.cmd run dev --prefix frontend`.
+- Untuk menjalankan backend lokal, gunakan `npm.cmd run dev --prefix backend`.
+- Untuk Prisma backend:
+  - Generate client: `npm.cmd run prisma:generate --prefix backend`
+  - Migrate DB: `npm.cmd run prisma:migrate --prefix backend`
+  - Seed data: `npm.cmd run seed --prefix backend`
+- Perubahan `.md` saja tidak wajib menjalankan lint/build.
 
-## Struktur Folder
+## Struktur Project
 
-- Semua komponen public/frontend masuk ke `src/components/public`.
-- Semua komponen admin masuk ke `src/components/admin`.
-- Komponen layout public masuk ke `src/components/public/layout`.
+- Project memakai struktur monorepo:
+
+```txt
+chill-app-tirta/
+  frontend/
+  backend/
+  aturan.md
+  vercel.json
+```
+
+- Frontend React berada di folder `frontend`.
+- Backend Express, Prisma, dan MySQL berada di folder `backend`.
+- Jangan memindahkan backend keluar repo utama jika tujuannya masih satu project Chill App.
+- Jangan commit `.env`.
+- `.env.example` boleh dipakai untuk contoh key tanpa secret.
+
+## Struktur Folder Frontend
+
+- Semua komponen public/frontend masuk ke `frontend/src/components/public`.
+- Semua komponen admin masuk ke `frontend/src/components/admin`.
+- Komponen layout public masuk ke `frontend/src/components/public/layout`.
   Contoh: `Navbar`, `Footer`, `HeroSection`, `LoadingScreen`.
 - Komponen layout admin masuk ke folder layout admin.
   Contoh: `AdminNavbar`, `AdminFooter`.
 - Komponen yang khusus untuk satu page harus masuk folder sesuai nama page.
-  Contoh: komponen page MyList masuk ke `src/components/public/myList`.
-- Komponen reusable kecil yang bisa dipakai banyak page masuk ke `src/components/public/ui`.
+  Contoh: komponen page MyList masuk ke `frontend/src/components/public/myList`.
+- Komponen reusable kecil yang bisa dipakai banyak page masuk ke `frontend/src/components/public/ui`.
   Contoh: `Button`, `FormInput`, `PageTitle`, `PageMessage`.
-- Page public masuk ke `src/pages/public`.
-- Page admin masuk ke `src/pages/admin`.
-- Custom hook public masuk ke `src/hooks/public`.
-- Custom hook admin masuk ke `src/hooks/admin`.
+- Custom hook public masuk ke `frontend/src/hooks/public`.
+- Custom hook admin masuk ke `frontend/src/hooks/admin`.
+
+## Struktur Page Public
+
+- Page public masuk ke `frontend/src/pages/public`.
+- Page auth dikelompokkan di `frontend/src/pages/public/auth`.
+  Contoh: `Login`, `Register`, `GoogleAuthCallback`.
+- Page katalog movie dan series digabung di `frontend/src/pages/public/content`.
+  Contoh: `Movie`, `Series`.
+- Page home masuk ke `frontend/src/pages/public/home`.
+- Page my list masuk ke `frontend/src/pages/public/myList`.
+- Page profile masuk ke `frontend/src/pages/public/profile`.
+- Page subscription/langganan masuk ke `frontend/src/pages/public/subscription`.
+- Page payment masuk ke `frontend/src/pages/public/payment`.
+- Jangan membuat folder page terlalu kecil kalau isinya masih satu flow yang sama.
+
+## Backend API
+
+- Data utama sekarang berasal dari backend sendiri, bukan MockAPI.
+- Backend memakai Express, Prisma, dan MySQL.
+- Base URL API frontend disimpan di `.env` frontend dengan key `VITE_API_BASE_URL`.
+  Contoh: `VITE_API_BASE_URL=http://localhost:5000/api/v1`.
+- Jangan menambah koneksi MockAPI baru untuk fitur utama.
+- `VITE_MOVIES_API_URL` dan `VITE_WATCH_PROGRESS_API_URL` hanya dianggap legacy override sementara. Untuk development baru, pakai `VITE_API_BASE_URL`.
+- Semua request API frontend memakai Axios dari folder `frontend/src/services`.
+- Request yang butuh login harus memakai `withCredentials: true`.
+- Token auth disimpan oleh backend dalam cookie `httpOnly` bernama `chill_token`.
+- Jangan simpan JWT di `localStorage` atau `sessionStorage`.
+- Semua halaman public utama harus lewat `ProtectedRoute`, kecuali login, register, dan Google callback.
+- Endpoint backend berada di prefix `/api/v1`.
+
+## Response API
+
+- Response sukses backend memakai format:
+
+```json
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "Success",
+  "data": null,
+  "meta": null
+}
+```
+
+- Response error tidak boleh menampilkan `stack` ke client.
+- Gunakan `code` yang jelas untuk error, misalnya `VALIDATION_ERROR`, `UNAUTHORIZED`, `NOT_FOUND`, atau `INTERNAL_SERVER_ERROR`.
+- Frontend mengambil payload utama dari `response.data.data`.
+- Pesan error UI diambil dari `response.data.message`.
+
+## Auth
+
+- Login email memakai endpoint `/auth/login`.
+- Register memakai endpoint `/auth/register`.
+- Cek session user memakai endpoint `/auth/me`.
+- Logout memakai endpoint `/auth/logout`.
+- Login Google memakai OAuth backend lewat `/auth/google`.
+- Callback Google frontend berada di route `/auth/google/callback`.
+- Backend membutuhkan env:
+  - `JWT_SECRET`
+  - `JWT_EXPIRES_IN`
+  - `GOOGLE_CLIENT_ID`
+  - `GOOGLE_CLIENT_SECRET`
+  - `GOOGLE_REDIRECT_URI`
+  - `CLIENT_URL`
+- Untuk Google login real, jangan pakai dummy login di frontend.
 
 ## Redux dan Data
 
 - Data movie utama disimpan di Redux, bukan langsung di state page.
-- Store Redux ada di `src/store/redux/store.js`.
-- Slice movie ada di `src/store/redux/moviesSlice.js`.
+- Store Redux ada di `frontend/src/store/redux/store.js`.
+- Slice movie ada di `frontend/src/store/redux/moviesSlice.js`.
 - API request movie dikerjakan lewat thunk Redux seperti `fetchMovies`.
 - Page jangan terlalu banyak berisi logic Redux.
-  Gunakan custom hook seperti `useHomeMovies` dan `useMyListMovies`.
+  Gunakan custom hook seperti `useHomeMovies`, `useMovieMovies`, `useSeriesMovies`, dan `useMyListMovies`.
 - `useDispatch`, `useSelector`, dan transform data sebaiknya berada di custom hook, bukan langsung di page.
 - Fetch data movie dilakukan saat status masih `idle`, supaya request tidak berulang tanpa perlu.
+- Data watch progress diambil dari endpoint `/watch-progress` dan dipakai untuk section continue watching.
 
-## MockAPI dan Axios
+## Skema Data Konten
 
-- Data movie berasal dari MockAPI lewat Axios.
-- URL API disimpan di `.env` dengan key `VITE_MOVIES_API_URL`.
-- Jangan tampilkan tulisan atau disclaimer bahwa data berasal dari MockAPI di UI.
-- Frontend harus pure memakai data API, jangan menampilkan data lama/fallback lokal secara sekilas saat refresh.
-- Jika data kosong, section homepage tidak perlu tampil.
-- Section yang memiliki data harus otomatis naik dan tampil sesuai data API.
-
-## Skema Data Movie
-
-Field yang dipakai project ini:
+- Sumber data utama backend adalah tabel `series_films`.
+- Walaupun nama tabel `series_films`, isinya mencakup movie dan series.
+- Pembedanya adalah field `type` dengan nilai `movie` atau `series`.
+- Field utama konten dari backend:
 
 ```txt
-slug            String
-title           String
-image           String
-category        String
-rating          String
-badge           String
-top             Boolean
-description     String
-previewImage    String
-ageRating       String
-episodeCount    String
-duration        String
-episodeTitle    String
-genres          String
-progress        Number
-previewType     String
-type            String
-section         String
-sectionTitle    String
-sectionOrder    Number
+id
+slug
+title
+type
+description
+image
+preview_image
+rating
+age_rating
+badge
+release_year
+is_top_ten
+is_active
+is_trending
+is_premium
+trailer_url
+published_at
+genres
+episodes
+people
 ```
 
-Catatan:
+- Field episode dari backend:
 
-- `category` untuk kategori/kelompok data lama jika masih diperlukan.
-- `genres` untuk genre film seperti Drama, Action, Komedi.
-- `section` untuk menentukan masuk section homepage mana.
-- `sectionTitle` untuk judul section yang tampil di homepage.
-- `sectionOrder` untuk urutan section.
-- `type` untuk jenis konten utama, isi `movie` atau `series`.
-- `previewType` berisi `movie`, `series`, atau `continue`.
-- `continueWatching` bukan genre. Itu masuk konsep section atau progress menonton.
-- `image` dan `previewImage` boleh sama jika tidak punya gambar khusus untuk hover.
-- Untuk movie, `episodeCount` bisa diisi `Movie`.
-- Untuk series, `episodeCount` berisi jumlah episode, misalnya `16 Episode`.
-- Untuk continue watching, gunakan `episodeTitle`, `duration`, dan `progress`.
+```txt
+id
+series_film_id
+title
+description
+season_number
+episode_number
+duration
+video_url
+thumbnail_url
+```
+
+- Field watch progress:
+
+```txt
+id
+user_id
+series_film_id
+episode_movie_id
+progress_percent
+last_position_seconds
+last_watched_at
+```
+
+- Frontend mapper ada di `frontend/src/utils/movieMapper.js`.
+- Mapper boleh mendukung field lama camelCase untuk kompatibilitas, tapi data baru dari backend sebaiknya pakai snake_case sesuai Prisma/API.
+- Untuk movie, durasi tetap diambil dari `episodes[0].duration`.
+- Untuk series, jumlah episode dihitung dari panjang array `episodes`.
+- Untuk playback legal, gunakan `trailer_url` atau `episode.video_url` berupa trailer/demo, bukan full movie berlisensi.
+- `is_premium` menentukan badge Premium dan akses konten premium.
+- User premium atau tidak dicek dari subscription user, bukan dari data movie saja.
+
+## Section Home, Movie, dan Series
+
+- Section tampilan sekarang dibuat dari config statis di custom hook, lalu isinya difilter dari data API.
+- Jangan menambah field `section` baru untuk kebutuhan section utama jika bisa difilter dari field database.
+- Home boleh menampilkan campuran movie dan series.
+- Page Film hanya menampilkan data dengan `type === "movie"`.
+- Page Series hanya menampilkan data dengan `type === "series"`.
+- Continue watching berasal dari `watch_progress`, bukan manual dari data movie.
+- Top rating menggunakan sorting `rating`.
+- Top 10 menggunakan `is_top_ten`.
+- Trending menggunakan `is_trending`.
+- Rilis baru menggunakan `published_at` dan fallback `release_year`.
+- Premium menggunakan `is_premium`.
+- Jika data section kosong, judul section tidak perlu tampil.
+- Mapping data API ke bentuk UI dilakukan di `frontend/src/utils/movieMapper.js`.
 
 ## Home Page
 
 - Home page harus mengambil data dari Redux lewat hook.
-- Section homepage dibuat otomatis berdasarkan field `section`, `sectionTitle`, dan `sectionOrder`.
-- Jangan menambah section secara manual di JSX jika bisa dari data.
-- Jika tidak ada data di satu section, judul section itu jangan ditampilkan.
-- Komponen page Home harus tetap clean:
-  - `Navbar`
-  - `HeroSection`
-  - daftar `MovieSection`
-  - `Footer`
-- Mapping data API ke bentuk UI dilakukan di `src/utils/movieMapper.js`.
+- Komponen page Home harus tetap clean dan hanya mengirim props ke content component.
+- Layout Home berada di komponen public terkait, bukan semua logic ditulis di page.
+- Jangan menampilkan fallback data lama secara sekilas saat refresh.
+- Jika data kosong, tampilkan empty state seperlunya dan jangan tampilkan title section kosong.
 
 ## Movie Card dan Hover
 
-- `MovieCard` harus reusable untuk Home dan MyList.
+- `MovieCard` harus reusable untuk Home, Movie, Series, dan MyList.
 - Untuk MyList, gunakan `MovieCard` dengan size compact.
 - Hover card memiliki tiga jenis:
   - `movie`
@@ -121,17 +234,39 @@ Catatan:
 - Jika card berada dekat ujung kiri atau kanan carousel, hover boleh bergeser agar tidak kepotong dan tombol play tetap bisa diklik.
 - Font genre/category di hover continue harus sama dengan hover movie dan series.
 - Jangan sampai hover tertutup arrow carousel.
+- Di mobile, hover tidak wajib muncul. Tap/click card boleh langsung membuka detail modal.
+
+## Detail Modal
+
+- Detail series dan detail movie punya tampilan berbeda.
+- Detail series menampilkan daftar episode.
+- Detail movie menampilkan rekomendasi serupa.
+- Data cast, director, dan creator berasal dari relasi `people`.
+- Genre berasal dari relasi `genres`.
+- Jangan hardcode detail jika data sudah tersedia dari API.
 
 ## MyList Page
 
 - Route MyList adalah `/daftar-saya`.
-- MyList mengambil data dari Redux dulu untuk sementara.
+- Untuk sementara MyList masih boleh mengambil data dari Redux jika endpoint my-list belum dihubungkan penuh.
+- Saat backend my-list sudah siap, gunakan endpoint `/my-lists`.
 - Logic data MyList berada di custom hook `useMyListMovies`.
-- Komponen khusus MyList masuk ke `src/components/public/myList`.
+- Komponen khusus MyList masuk ke `frontend/src/components/public/myList`.
 - Judul page gunakan reusable component `PageTitle`.
 - Loading, error, dan empty state gunakan reusable component `PageMessage`.
 - Grid MyList harus responsive dan gap antar card jangan terlalu jauh.
 - Mobile MyList harus rapat dengan navbar sesuai desain.
+
+## Subscription dan Payment
+
+- Page langganan berada di route `/langganan`.
+- Page ringkasan pembayaran berada di route `/pembayaran`.
+- Page pembayaran menunggu berada di route `/pembayaran/menunggu`.
+- Data package idealnya berasal dari endpoint `/packages`.
+- Order dibuat lewat endpoint `/orders`.
+- Payment diproses lewat endpoint `/payments`.
+- Subscription aktif dicek lewat endpoint `/subscriptions`.
+- Jangan simpan status premium hanya di frontend.
 
 ## Admin Page
 
@@ -168,6 +303,14 @@ Catatan:
 - Komponen yang sifatnya umum masuk ke `ui`.
 - Komponen yang sifatnya layout masuk ke `layout`.
 
+## Performa
+
+- Hindari gambar terlalu besar dari sumber eksternal.
+- Untuk poster gunakan ukuran yang cukup, jangan selalu memakai original size.
+- Tambahkan `loading="lazy"` pada gambar list/card jika memungkinkan.
+- Modal detail jangan melakukan render data berat yang tidak diperlukan.
+- Jika bundle frontend makin besar, pertimbangkan dynamic import untuk page besar atau modal besar.
+
 ## Git dan Deploy
 
 - Push ke GitHub hanya jika diminta.
@@ -175,3 +318,4 @@ Catatan:
 - Jangan commit `.env`.
 - `.env.example` boleh dipakai untuk contoh key tanpa secret.
 - Sebelum push, idealnya jalankan lint dan build.
+- Vercel root project memakai konfigurasi root `vercel.json` dan build frontend dari folder `frontend`.

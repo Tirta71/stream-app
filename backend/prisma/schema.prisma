@@ -118,18 +118,25 @@ model Order {
 }
 
 model Payment {
-  id             BigInt        @id @default(autoincrement())
-  orderId        BigInt        @map("order_id")
-  paymentMethod  String        @map("payment_method") @db.VarChar(100)
-  paymentGateway String?       @map("payment_gateway") @db.VarChar(100)
-  transactionId  String?       @map("transaction_id") @db.VarChar(150)
-  amount         Decimal       @db.Decimal(12, 2)
-  status         PaymentStatus @default(PENDING)
-  paidAt         DateTime?     @map("paid_at")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id              BigInt        @id @default(autoincrement())
+  orderId         BigInt        @map("order_id")
+  paymentMethod   String        @map("payment_method") @db.VarChar(100)
+  paymentGateway  String?       @map("payment_gateway") @db.VarChar(100)
+  transactionId   String?       @map("transaction_id") @db.VarChar(150)
+  snapToken       String?       @map("snap_token") @db.Text
+  redirectUrl     String?       @map("redirect_url") @db.Text
+  fraudStatus     String?       @map("fraud_status") @db.VarChar(50)
+  bank            String?       @db.VarChar(50)
+  vaNumber        String?       @map("va_number") @db.VarChar(100)
+  rawNotification Json?         @map("raw_notification")
+  amount          Decimal       @db.Decimal(12, 2)
+  status          PaymentStatus @default(PENDING)
+  paidAt          DateTime?     @map("paid_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
+  @@index([transactionId], map: "payments_transaction_id_idx")
   @@map("payments")
 }
 

@@ -6,6 +6,7 @@ import PageMessage from "../ui/PageMessage.jsx";
 import PageTransition from "../ui/PageTransition.jsx";
 import {
   BcaIcon,
+  CardBrandIcons,
   PaymentMethodOption,
   TransactionSummary,
 } from "./PaymentContent.jsx";
@@ -66,6 +67,22 @@ function CountdownBanner({ expiredAt }) {
   );
 }
 
+function SuccessBanner() {
+  return (
+    <section className="rounded-[10px] bg-[#202829] px-6 py-7 text-center max-[640px]:rounded-lg max-[640px]:px-6 max-[640px]:py-7">
+      <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#2f8f4e] text-2xl font-bold text-white">
+        ✓
+      </span>
+      <h1 className="m-0 mt-4 text-2xl font-bold leading-[1.25] max-[640px]:text-xl">
+        Pembayaran Berhasil
+      </h1>
+      <p className="m-0 mt-2 text-base leading-[1.4] text-white/75 max-[640px]:text-sm">
+        Paket premium kamu sudah aktif. Selamat menikmati semua konten CHILL.
+      </p>
+    </section>
+  );
+}
+
 function CopyIcon() {
   return (
     <svg
@@ -98,7 +115,8 @@ function formatDate(value) {
 }
 
 function PaymentMeta({ order, payment }) {
-  const paymentCode = payment?.transactionId || order?.orderCode || "-";
+  const paymentCode =
+    payment?.vaNumber || payment?.transactionId || order?.orderCode || "-";
   const copyPaymentCode = () => {
     navigator.clipboard?.writeText(paymentCode).catch(() => null);
   };
@@ -123,7 +141,57 @@ function PaymentMeta({ order, payment }) {
   );
 }
 
-function PaymentInstructions() {
+function getPaymentMethodInfo(payment) {
+  const method = (payment?.paymentMethod ?? payment?.payment_method ?? "")
+    .toString()
+    .toLowerCase();
+  const bank = (payment?.bank ?? "").toString().toLowerCase();
+
+  if (method === "credit_card") {
+    return {
+      icon: <CardBrandIcons />,
+      instructionType: "card",
+      label: "Kartu Debit/Kredit",
+    };
+  }
+
+  if (method === "bca_va" || method === "bank_transfer" || bank === "bca") {
+    return {
+      icon: <BcaIcon />,
+      instructionType: "bca_va",
+      label: "BCA Virtual Account",
+    };
+  }
+
+  return {
+    icon: <BcaIcon />,
+    instructionType: "payment",
+    label: "Metode Pembayaran",
+  };
+}
+
+function PaymentInstructions({ type }) {
+  if (type === "card") {
+    return (
+      <section
+        className="mt-8 max-[640px]:mt-6"
+        aria-labelledby="instruction-title"
+      >
+        <h2
+          id="instruction-title"
+          className="m-0 text-lg font-bold leading-[1.4] max-[640px]:text-base"
+        >
+          Tata Cara Pembayaran
+        </h2>
+        <ol className="m-0 mt-4 list-decimal space-y-1 pl-5 text-base leading-[1.35] text-white/70 max-[640px]:text-xs">
+          <li>Klik tombol Bayar untuk membuka halaman Midtrans.</li>
+          <li>Pilih kartu debit/kredit dan masukkan detail kartu kamu.</li>
+          <li>Ikuti instruksi keamanan pembayaran sampai transaksi berhasil.</li>
+        </ol>
+      </section>
+    );
+  }
+
   return (
     <section className="mt-8 max-[640px]:mt-6" aria-labelledby="instruction-title">
       <h2
@@ -159,10 +227,12 @@ function PaymentPendingContent({
   totalPayment,
 }) {
   const expiredAt = order?.paymentExpiredAt;
+  const isPaid = (order?.status ?? "").toString().toLowerCase() === "paid";
   const selectedPayment = useMemo(
     () => payment ?? (Array.isArray(order?.payments) ? order.payments[0] : null),
     [order, payment],
   );
+  const paymentMethodInfo = getPaymentMethodInfo(selectedPayment);
 
   if (isLoading && !plan) {
     return (
@@ -195,7 +265,7 @@ function PaymentPendingContent({
     <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
       <Navbar />
       <PageTransition className="bg-[#181a1c] px-20 pb-10 pt-10 max-[900px]:px-5 max-[640px]:pb-9 max-[640px]:pt-7">
-        <CountdownBanner expiredAt={expiredAt} />
+        {isPaid ? <SuccessBanner /> : <CountdownBanner expiredAt={expiredAt} />}
 
         <h1 className="m-0 mt-10 text-[32px] font-bold leading-[1.2] max-[640px]:mt-6 max-[640px]:text-xl">
           Ringkasan Pembayaran
@@ -216,9 +286,9 @@ function PaymentPendingContent({
                 Metode Pembayaran
               </h2>
               <div className="mt-3">
-                <PaymentMethodOption selected>
-                  <BcaIcon />
-                  <span>BCA Virtual Account</span>
+                <PaymentMethodOption disabled selected>
+                  {paymentMethodInfo.icon}
+                  <span>{paymentMethodInfo.label}</span>
                 </PaymentMethodOption>
               </div>
             </section>
@@ -232,7 +302,9 @@ function PaymentPendingContent({
               totalPayment={totalPayment}
             />
 
-            <PaymentInstructions />
+            {isPaid ? null : (
+              <PaymentInstructions type={paymentMethodInfo.instructionType} />
+            )}
 
             {error ? (
               <PageMessage
@@ -248,7 +320,7 @@ function PaymentPendingContent({
               type="button"
               onClick={onConfirmPayment}
             >
-              {isSubmitting ? "Memproses..." : "Bayar"}
+              {isSubmitting ? "Memproses..." : isPaid ? "Lihat Profil" : "Bayar"}
             </button>
           </div>
         </div>

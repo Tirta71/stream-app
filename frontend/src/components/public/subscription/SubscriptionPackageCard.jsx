@@ -16,10 +16,15 @@ function SubscriptionPackageCard({
   actionLabel = "Langganan",
   actionTo,
   className = "",
+  disabled = false,
   plan,
 }) {
-  const actionClassName =
-    "mt-9 flex min-h-[42px] w-full items-center justify-center rounded-full bg-white px-5 text-base font-bold text-[#0f1e93] transition-colors hover:bg-white/90 max-[640px]:mt-6 max-[640px]:min-h-9 max-[640px]:text-sm";
+  const actionClassName = [
+    "mt-9 flex min-h-[42px] w-full items-center justify-center rounded-full bg-white px-5 text-base font-bold text-[#0f1e93] transition-colors max-[640px]:mt-6 max-[640px]:min-h-9 max-[640px]:text-sm",
+    disabled
+      ? "cursor-not-allowed opacity-70"
+      : "hover:bg-white/90",
+  ].join(" ");
 
   return (
     <article
@@ -50,7 +55,16 @@ function SubscriptionPackageCard({
 
       <div className="mt-auto pt-9 max-[640px]:pt-7">
         <div className="h-px w-full bg-white/20" />
-        {actionTo ? (
+        {disabled ? (
+          <button
+            className={actionClassName}
+            disabled
+            style={{ color: "#0f1e93" }}
+            type="button"
+          >
+            {actionLabel}
+          </button>
+        ) : actionTo ? (
           <Link
             className={actionClassName}
             style={{ color: "#0f1e93" }}

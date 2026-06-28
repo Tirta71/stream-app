@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Footer from "../layout/Footer.jsx";
 import Navbar from "../layout/Navbar.jsx";
 import SubscriptionPackageCard from "../subscription/SubscriptionPackageCard.jsx";
@@ -49,12 +50,41 @@ function BcaIcon() {
   );
 }
 
-function PaymentMethodOption({ children, selected = false }) {
+const paymentMethods = [
+  {
+    icon: <CardBrandIcons />,
+    id: "credit_card",
+    label: "Kartu Debit/Kredit",
+  },
+  {
+    icon: <BcaIcon />,
+    id: "bca_va",
+    label: "BCA Virtual Account",
+  },
+];
+
+function PaymentMethodOption({
+  children,
+  disabled = false,
+  onClick,
+  selected = false,
+}) {
   return (
-    <div className="flex min-h-12 items-center gap-3 rounded border border-white/90 px-3 text-base text-white max-[640px]:min-h-[48px] max-[640px]:text-sm">
+    <button
+      className={[
+        "flex min-h-12 items-center gap-3 rounded border px-3 text-left text-base text-white transition-colors max-[640px]:min-h-[48px] max-[640px]:text-sm",
+        selected
+          ? "border-white bg-white/[0.08]"
+          : "border-white/55 hover:border-white/90 hover:bg-white/[0.04]",
+        disabled ? "cursor-default" : "",
+      ].join(" ")}
+      disabled={disabled}
+      type="button"
+      onClick={onClick}
+    >
       <RadioMark selected={selected} />
       {children}
-    </div>
+    </button>
   );
 }
 
@@ -93,6 +123,8 @@ function PaymentContent({
   plan,
   totalPayment,
 }) {
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("bca_va");
+
   if (isLoading && !plan) {
     return (
       <div className="min-h-svh min-w-[320px] overflow-x-hidden bg-[#181a1c] text-[rgba(255,255,255,0.96)]">
@@ -143,14 +175,16 @@ function PaymentContent({
                 Metode Pembayaran
               </h2>
               <div className="mt-3 grid grid-cols-2 gap-4 max-[760px]:grid-cols-1 max-[640px]:gap-4">
-                <PaymentMethodOption>
-                  <CardBrandIcons />
-                  <span>Kartu Debit/Kredit</span>
-                </PaymentMethodOption>
-                <PaymentMethodOption>
-                  <BcaIcon />
-                  <span>BCA Virtual Account</span>
-                </PaymentMethodOption>
+                {paymentMethods.map((method) => (
+                  <PaymentMethodOption
+                    key={method.id}
+                    selected={selectedPaymentMethod === method.id}
+                    onClick={() => setSelectedPaymentMethod(method.id)}
+                  >
+                    {method.icon}
+                    <span>{method.label}</span>
+                  </PaymentMethodOption>
+                ))}
               </div>
             </section>
 
@@ -195,7 +229,7 @@ function PaymentContent({
               className="mt-5 inline-flex min-h-[42px] min-w-[94px] items-center justify-center rounded-full bg-[#0f1e93] px-6 text-base font-bold text-white transition-colors hover:bg-[#1728b8] disabled:opacity-60 max-[640px]:mt-4 max-[640px]:min-h-10 max-[640px]:min-w-[70px] max-[640px]:text-sm"
               disabled={isSubmitting}
               type="button"
-              onClick={() => onPay?.("BCA Virtual Account")}
+              onClick={() => onPay?.(selectedPaymentMethod)}
             >
               {isSubmitting ? "Memproses..." : "Bayar"}
             </button>
@@ -207,5 +241,5 @@ function PaymentContent({
   );
 }
 
-export { BcaIcon, PaymentMethodOption, TransactionSummary };
+export { BcaIcon, CardBrandIcons, PaymentMethodOption, TransactionSummary };
 export default PaymentContent;

@@ -51,6 +51,15 @@ const markPaymentAsPaid = (paymentId) =>
     "Gagal mengkonfirmasi pembayaran",
   );
 
+const syncPaymentStatus = (orderId) =>
+  requestApi(
+    {
+      method: "POST",
+      url: `/payments/orders/${orderId}/sync`,
+    },
+    "Gagal menyinkronkan status pembayaran",
+  );
+
 const getCurrentSubscription = () =>
   requestApi(
     {
@@ -136,6 +145,7 @@ export {
   getProfile,
   markPaymentAsPaid,
   removeMyList,
+  syncPaymentStatus,
   updateProfile,
   uploadProfilePhoto,
 };

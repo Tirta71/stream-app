@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   createOrder,
   createPayment,
   getOrder,
-  markPaymentAsPaid,
+  syncPaymentStatus,
 } from "../../services/accountApi.js";
+import { openMidtransPayment } from "../../services/midtransSnap.js";
 import useSubscriptionPlans, {
   adminFee,
   formatRupiah,
@@ -16,18 +17,31 @@ function getOrderPayment(order) {
   return Array.isArray(order?.payments) ? order.payments[0] : null;
 }
 
+function isOrderPaid(order) {
+  return (order?.status ?? "").toString().toLowerCase() === "paid";
+}
+
 function usePaymentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedPlanId = searchParams.get("paket");
   const orderId = searchParams.get("order");
   const paymentId = searchParams.get("payment");
+  const midtransReturnKey = [
+    searchParams.get("order_id"),
+    searchParams.get("status_code"),
+    searchParams.get("transaction_status"),
+  ]
+    .filter(Boolean)
+    .join(":");
+  const shouldSyncReturnedPayment = Boolean(orderId && midtransReturnKey);
   const plansState = useSubscriptionPlans(selectedPlanId);
   const [order, setOrder] = useState(null);
   const [orderStatus, setOrderStatus] = useState("loading");
   const [orderError, setOrderError] = useState("");
   const [actionStatus, setActionStatus] = useState("idle");
   const [actionError, setActionError] = useState("");
+  const lastSyncedReturnRef = useRef("");
 
   useEffect(() => {
     if (!orderId) {
@@ -70,7 +84,85 @@ function usePaymentPage() {
   }, [order, plansState.selectedPlan]);
   const totalPayment = Number(order?.totalPrice) || plansState.totalPayment;
 
-  const startPayment = async (paymentMethod = "BCA Virtual Account") => {
+  const goToWaitingPayment = (targetOrder, targetPayment) => {
+    const paymentQuery = targetPayment?.id ? `&payment=${targetPayment.id}` : "";
+
+    navigate(`/pembayaran/menunggu?order=${targetOrder.id}${paymentQuery}`);
+  };
+
+  const syncOrderPayment = useCallback(
+    async (targetOrderId) => {
+      await syncPaymentStatus(targetOrderId);
+
+      const refreshedOrder = await getOrder(targetOrderId);
+
+      setOrder(refreshedOrder);
+      setOrderStatus("succeeded");
+
+      return refreshedOrder;
+    },
+    [],
+  );
+
+  const openPayment = async (targetOrder, targetPayment) => {
+    await openMidtransPayment(targetPayment, {
+      onClose: () => goToWaitingPayment(targetOrder, targetPayment),
+      onError: () => goToWaitingPayment(targetOrder, targetPayment),
+      onPending: () => goToWaitingPayment(targetOrder, targetPayment),
+      onSuccess: () => {
+        syncOrderPayment(targetOrder.id).catch(() => {
+          goToWaitingPayment(targetOrder, targetPayment);
+        });
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (!shouldSyncReturnedPayment || orderStatus !== "succeeded") {
+      return undefined;
+    }
+
+    const syncKey = `${orderId}:${midtransReturnKey}`;
+
+    if (lastSyncedReturnRef.current === syncKey) {
+      return undefined;
+    }
+
+    lastSyncedReturnRef.current = syncKey;
+    let isActive = true;
+
+    setActionStatus("loading");
+    setActionError("");
+
+    syncOrderPayment(orderId)
+      .then(() => {
+        if (isActive) {
+          setActionStatus("succeeded");
+        }
+      })
+      .catch((requestError) => {
+        if (!isActive) {
+          return;
+        }
+
+        setActionStatus("failed");
+        setActionError(
+          requestError.message || "Gagal menyinkronkan pembayaran",
+        );
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    midtransReturnKey,
+    orderId,
+    orderStatus,
+    shouldSyncReturnedPayment,
+    syncOrderPayment,
+  ]);
+
+  const startPayment = async (paymentMethod = "bca_va") => {
     if (!selectedPlan?.packageId) {
       setActionError("Paket langganan belum tersedia");
       return;
@@ -83,13 +175,11 @@ function usePaymentPage() {
       const createdOrder = await createOrder(selectedPlan.packageId);
       const createdPayment = await createPayment({
         orderId: createdOrder.id,
-        paymentGateway: "BCA",
+        paymentGateway: "midtrans",
         paymentMethod,
       });
 
-      navigate(
-        `/pembayaran/menunggu?order=${createdOrder.id}&payment=${createdPayment.id}`,
-      );
+      goToWaitingPayment(createdOrder, createdPayment);
     } catch (requestError) {
       setActionStatus("failed");
       setActionError(requestError.message || "Gagal membuat pembayaran");
@@ -100,9 +190,13 @@ function usePaymentPage() {
   };
 
   const confirmPayment = async () => {
-    const targetPaymentId = paymentId ?? orderPayment?.id;
+    const targetPayment = orderPayment;
+    if (isOrderPaid(order)) {
+      navigate("/profil");
+      return;
+    }
 
-    if (!targetPaymentId) {
+    if (!order || !targetPayment) {
       setActionError("Payment belum tersedia");
       return;
     }
@@ -111,11 +205,10 @@ function usePaymentPage() {
     setActionError("");
 
     try {
-      await markPaymentAsPaid(targetPaymentId);
-      navigate("/profil");
+      await openPayment(order, targetPayment);
     } catch (requestError) {
       setActionStatus("failed");
-      setActionError(requestError.message || "Gagal mengkonfirmasi pembayaran");
+      setActionError(requestError.message || "Gagal membuka pembayaran");
       return;
     }
 
@@ -131,6 +224,7 @@ function usePaymentPage() {
     isSubmitting: actionStatus === "loading",
     order,
     payment: orderPayment,
+    paymentId,
     selectedPlan,
     startPayment,
     status: orderError || plansState.error ? "failed" : "succeeded",
