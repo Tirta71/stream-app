@@ -1,5 +1,9 @@
+import dns from "dns";
 import nodemailer from "nodemailer";
 import env from "../config/env.js";
+
+// Force IPv4 to prevent ENETUNREACH errors on Railway when connecting to IPv6
+dns.setDefaultResultOrder("ipv4first");
 
 const hasSmtpConfig = Boolean(env.smtpHost && env.smtpUser && env.smtpPass);
 
