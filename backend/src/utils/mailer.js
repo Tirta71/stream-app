@@ -22,6 +22,9 @@ const transporter = hasSmtpConfig
       host: env.smtpHost,
       port: env.smtpPort,
       secure: env.smtpSecure,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     })
   : nodemailer.createTransport({
       jsonTransport: true,

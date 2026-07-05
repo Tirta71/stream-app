@@ -101,7 +101,7 @@ const sendVerificationEmail = async (user, { rotateToken = false } = {}) => {
     targetUser.emailVerificationToken,
   );
 
-  await sendEmail({
+  sendEmail({
     html: `
       <h2>Verifikasi Email CHILL</h2>
       <p>Halo ${targetUser.name},</p>
@@ -120,6 +120,8 @@ const sendVerificationEmail = async (user, { rotateToken = false } = {}) => {
     subject: "Verifikasi Email CHILL",
     text: `Halo ${targetUser.name},\n\nKlik tautan berikut untuk verifikasi email kamu:\n${verificationUrl}\n\nTautan ini berlaku selama ${env.emailVerificationTtlHours} jam. Jika tautan kedaluwarsa, akun yang belum terverifikasi akan dihapus dan kamu perlu daftar ulang.\n\nJika kamu tidak merasa membuat akun ini, abaikan email ini.`,
     to: targetUser.email,
+  }).catch((emailError) => {
+    console.error("Failed to send verification email:", emailError.message);
   });
 
   return targetUser;
